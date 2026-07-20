@@ -43,14 +43,25 @@ Grundfunktionerne er nu på plads:
 
 Det der stadig mangler:
 
-- [ ] Route-guard på `/child`-ruterne (kræver en afklaring af hvordan
-      børnenes "session" skal fungere, da de ikke har eget login)
+- [x] Route-guard på `/child`-ruterne (accepterer både forældre-session
+      og en parret enheds anonyme session)
+- [x] Barnets egen enhed kan tilknyttes uden forælderens login, via en
+      kortlivet parringskode (`PairingCodeGenerator` hos forælderen,
+      `/pair` på barnets enhed) - se migration
+      `20260720010000_device_pairing.sql`
 - [ ] Rigtige app-ikoner (`public/icon-192.png`, `public/icon-512.png`)
 - [ ] Ekstra spærre (PIN) i `ChildProfilePicker`, hvis familien ønsker det
 - [ ] Håndtering af flere uger frem/tilbage til redigering (barnet ser
       dog stadig kun den aktuelle uge)
 - [ ] Mulighed for at redigere/slette børn og ændre rækkefølgen på
       aktiviteter (kun oprettelse og sletning er understøttet nu)
+
+## Vigtigt: Anonymous sign-ins skal slås til
+
+Enheds-parring (så et barns egen iPad/telefon kan bruges uden en
+forælders login) kræver at **Anonymous sign-ins** er aktiveret i jeres
+Supabase-projekt: **Authentication → Sign In / Providers → Anonymous
+Sign-Ins**. Uden det vil `/pair`-siden fejle.
 
 ## GDPR-noter
 

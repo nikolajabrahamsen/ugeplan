@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateFamily } from "../../lib/family";
 import ChildForm from "../../components/ChildForm";
+import PairingCodeGenerator from "../../components/PairingCodeGenerator";
 
 interface Child {
   id: string;
@@ -49,8 +50,9 @@ export default function ParentDashboard() {
       <h1>Jeres børn</h1>
       <ul className="children-list">
         {children.map((child) => (
-          <li key={child.id}>
+          <li key={child.id} className="child-row">
             <Link to={`/parent/child/${child.id}/plan`}>{child.name} — redigér ugeplan</Link>
+            <PairingCodeGenerator childId={child.id} childName={child.name} />
           </li>
         ))}
       </ul>

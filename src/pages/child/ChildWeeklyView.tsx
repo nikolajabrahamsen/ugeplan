@@ -63,15 +63,17 @@ export default function ChildWeeklyView() {
   }, [childId]);
 
   async function toggleComplete(activity: Activity) {
-    const newValue = activity.completed_at ? null : new Date().toISOString();
-    const { error } = await supabase
-      .from("activities")
-      .update({ completed_at: newValue })
-      .eq("id", activity.id);
+    // Bruger RPC'en frem for en direkte .update(), fordi en parret
+    // barne-enhed kun har rettighed til at kalde denne ene, snævre
+    // funktion - ikke til at redigere activities-rækken direkte.
+    const { data: newCompletedAt, error } = await supabase.rpc(
+      "toggle_activity_completed",
+      { target_activity_id: activity.id }
+    );
 
     if (!error) {
       setActivities((prev) =>
-        prev.map((a) => (a.id === activity.id ? { ...a, completed_at: newValue } : a))
+        prev.map((a) => (a.id === activity.id ? { ...a, completed_at: newCompletedAt } : a))
       );
     }
   }

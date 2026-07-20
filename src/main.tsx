@@ -7,6 +7,7 @@ import WeeklyPlanEditor from "./pages/parent/WeeklyPlanEditor";
 import RequireAuth from "./components/RequireAuth";
 import ChildProfilePicker from "./pages/child/ChildProfilePicker";
 import ChildWeeklyView from "./pages/child/ChildWeeklyView";
+import PairDevice from "./pages/child/PairDevice";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -32,10 +33,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           }
         />
 
-        {/* Børne-del: låst "kiosk" visning. Beskyttet af samme RequireAuth
-            som forældre-delen, fordi børnene ikke har eget login - de
-            tilgås gennem den forælder der allerede er logget ind på
-            enheden (se profilvalget i ChildProfilePicker). */}
+        {/* Offentlig: barnets enhed parres her, uden nogen session i forvejen */}
+        <Route path="/pair" element={<PairDevice />} />
+
+        {/* Børne-del: låst "kiosk" visning. Beskyttet af RequireAuth -
+            enten en forælders session, eller en enheds egen anonyme
+            session efter parring via /pair. */}
         <Route
           path="/child"
           element={

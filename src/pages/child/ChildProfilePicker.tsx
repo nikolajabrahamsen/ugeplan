@@ -52,6 +52,9 @@ export default function ChildProfilePicker() {
           </button>
         ))}
       </div>
+      <p className="pair-device-link">
+        <a href="/pair">Ny enhed? Tilknyt den her</a>
+      </p>
     </div>
   );
 }
