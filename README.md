@@ -32,18 +32,25 @@ src/pages/child/        Låst børne-visning (profilvalg + ugeplan)
 
 ## Status / næste skridt
 
-Dette er et skelet, ikke en færdig app. Det der mangler før det er brugbart:
+Grundfunktionerne er nu på plads:
 
-- [ ] Formular til at oprette børn (i `ParentDashboard`)
-- [ ] Ugeplan-editor: vælg dag, søg ARASAAC-piktogram (`searchPictograms`
-      i `src/lib/arasaac.ts`), sæt titel, gem som `activity`
-- [ ] `onAuthStateChange`-lytter i `ParentLogin`, så login faktisk
-      navigerer videre til `/parent`
-- [ ] Route-guards, så `/parent` og `/child` kræver et aktivt login
+- [x] Formular til at oprette børn (`ChildForm`, brugt i `ParentDashboard`)
+- [x] Ugeplan-editor (`WeeklyPlanEditor`): vælg dag, søg ARASAAC-piktogram
+      via `PictogramPicker`, sæt titel, gem som `activity`
+- [x] `onAuthStateChange`-lytter i `ParentLogin`, så login navigerer
+      videre til `/parent`
+- [x] Route-guard (`RequireAuth`) på `/parent`-ruterne
+
+Det der stadig mangler:
+
+- [ ] Route-guard på `/child`-ruterne (kræver en afklaring af hvordan
+      børnenes "session" skal fungere, da de ikke har eget login)
 - [ ] Rigtige app-ikoner (`public/icon-192.png`, `public/icon-512.png`)
 - [ ] Ekstra spærre (PIN) i `ChildProfilePicker`, hvis familien ønsker det
 - [ ] Håndtering af flere uger frem/tilbage til redigering (barnet ser
       dog stadig kun den aktuelle uge)
+- [ ] Mulighed for at redigere/slette børn og ændre rækkefølgen på
+      aktiviteter (kun oprettelse og sletning er understøttet nu)
 
 ## GDPR-noter
 

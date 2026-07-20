@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -7,6 +7,15 @@ export default function ParentLogin() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Naviger til forældre-dashboardet så snart der er en aktiv session -
+    // både ved almindeligt login og når magic-link-callbacket rammer siden
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) navigate("/parent");
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [navigate]);
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -18,11 +27,6 @@ export default function ParentLogin() {
     }
     setSent(true);
   }
-
-  // NOTE: Efter magic-link callback bør en useEffect lytte på
-  // supabase.auth.onAuthStateChange og navigere til /parent.
-  // Udeladt her for overskuelighedens skyld i skelettet.
-  void navigate;
 
   return (
     <div className="auth-screen">
