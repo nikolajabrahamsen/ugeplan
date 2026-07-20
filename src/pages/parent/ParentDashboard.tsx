@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateFamily } from "../../lib/family";
+import { pictogramImageUrl } from "../../lib/arasaac";
 import ChildForm from "../../components/ChildForm";
 import PairingCodeGenerator from "../../components/PairingCodeGenerator";
 import InstallAppPrompt from "../../components/InstallAppPrompt";
 import FamilyParents from "../../components/FamilyParents";
+import EditChildModal from "../../components/EditChildModal";
 
 interface Child {
   id: string;
   name: string;
+  birth_year: number | null;
   avatar_pictogram_id: string | null;
 }
 
@@ -18,12 +21,13 @@ export default function ParentDashboard() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingChild, setEditingChild] = useState<Child | null>(null);
 
   async function loadChildren() {
     // RLS sørger for kun at returnere børn i brugerens egen familie
     const { data, error } = await supabase
       .from("children")
-      .select("id, name, avatar_pictogram_id")
+      .select("id, name, birth_year, avatar_pictogram_id")
       .order("name");
 
     if (!error && data) setChildren(data);
@@ -70,10 +74,32 @@ export default function ParentDashboard() {
         {children.map((child) => (
           <li key={child.id} className="child-row">
             <div className="child-row-heading">
-              <span className="child-avatar">{child.name.charAt(0).toUpperCase()}</span>
+              <button
+                type="button"
+                className="child-avatar-button"
+                onClick={() => setEditingChild(child)}
+                aria-label={`Redigér ${child.name}`}
+              >
+                {child.avatar_pictogram_id ? (
+                  <img
+                    src={pictogramImageUrl(child.avatar_pictogram_id, 100)}
+                    alt=""
+                    className="child-avatar-img"
+                  />
+                ) : (
+                  <span className="child-avatar">{child.name.charAt(0).toUpperCase()}</span>
+                )}
+              </button>
               <Link to={`/parent/child/${child.id}/plan`} className="child-name-link">
                 {child.name}
               </Link>
+              <button
+                type="button"
+                className="btn-icon child-edit-link"
+                onClick={() => setEditingChild(child)}
+              >
+                Redigér
+              </button>
             </div>
             <PairingCodeGenerator childId={child.id} childName={child.name} />
           </li>
@@ -88,6 +114,17 @@ export default function ParentDashboard() {
         <Link to="/child" className="btn btn-secondary switch-to-child-view">
           Skift til børnenes visning →
         </Link>
+      )}
+
+      {editingChild && (
+        <EditChildModal
+          child={editingChild}
+          onClose={() => setEditingChild(null)}
+          onSaved={() => {
+            setEditingChild(null);
+            loadChildren();
+          }}
+        />
       )}
     </div>
   );

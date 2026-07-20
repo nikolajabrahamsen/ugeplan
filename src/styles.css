@@ -782,3 +782,124 @@ input:focus {
   font-size: 0.85rem;
   margin-top: 0.75rem;
 }
+
+/* --- Tidspunkt + redigerbare aktiviteter (forældre-editor) --- */
+
+.editor-activity-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.editor-activity-text {
+  font-size: 0.9rem;
+  color: var(--color-ink);
+}
+
+.editor-activity-time {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  margin-right: 0.4rem;
+}
+
+.editor-picto-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  padding: 0.5rem;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+/* --- Klokkeslæt i barnets ugevisning --- */
+
+.activity-time {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+/* --- "Skift barn"-link i børne-visningen --- */
+
+.child-back-link {
+  display: inline-block;
+  margin: 1rem 1.5rem 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+
+/* --- Redigerbar barne-avatar på dashboardet --- */
+
+.child-avatar-button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.child-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-primary-soft);
+}
+
+.child-edit-link {
+  margin-left: auto;
+}
+
+/* --- Redigér barn-modal --- */
+
+.edit-child-modal {
+  max-width: 360px;
+}
+
+.avatar-picker-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.avatar-picker-button img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-card-initial.small {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+}
+
+.edit-child-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

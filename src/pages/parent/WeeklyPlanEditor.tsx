@@ -10,6 +10,16 @@ interface Activity {
   pictogram_id: string;
   title: string;
   sort_order: number;
+  time_of_day: string | null;
+}
+
+interface ActivityFormState {
+  activityId: string | null; // null = ny aktivitet, ellers redigering af eksisterende
+  day: number;
+  pictogramId: string | null;
+  title: string;
+  time: string; // "HH:MM" eller ""
+  pickingPictogram: boolean;
 }
 
 const DAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
@@ -22,24 +32,28 @@ function mondayOfCurrentWeek(): string {
   return monday.toISOString().slice(0, 10);
 }
 
+/** Sorterer så aktiviteter med klokkeslæt kommer i tidsrækkefølge, og de uden i deres oprindelige rækkefølge til sidst. */
+function sortDayActivities(activities: Activity[]): Activity[] {
+  return [...activities].sort((a, b) => {
+    if (a.time_of_day && b.time_of_day) return a.time_of_day.localeCompare(b.time_of_day);
+    if (a.time_of_day) return -1;
+    if (b.time_of_day) return 1;
+    return a.sort_order - b.sort_order;
+  });
+}
+
 export default function WeeklyPlanEditor() {
   const { childId } = useParams<{ childId: string }>();
   const [planId, setPlanId] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State til "tilføj aktivitet"-flowet: hvilken dag er der ved at blive
-  // tilføjet en aktivitet til, og er piktogram-vælgeren åben
-  const [addingDay, setAddingDay] = useState<number | null>(null);
-  const [pendingPictogramId, setPendingPictogramId] = useState<string | null>(null);
-  const [pendingTitle, setPendingTitle] = useState("");
+  const [form, setForm] = useState<ActivityFormState | null>(null);
 
   async function loadWeek() {
     if (!childId) return;
     const weekStart = mondayOfCurrentWeek();
 
-    // Find eller opret ugeplanen for denne uge
     let { data: plan } = await supabase
       .from("weekly_plans")
       .select("id")
@@ -65,7 +79,7 @@ export default function WeeklyPlanEditor() {
 
     const { data: acts, error: actsError } = await supabase
       .from("activities")
-      .select("id, day_of_week, pictogram_id, title, sort_order")
+      .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day")
       .eq("weekly_plan_id", plan!.id)
       .order("day_of_week")
       .order("sort_order");
@@ -80,47 +94,78 @@ export default function WeeklyPlanEditor() {
   }, [childId]);
 
   function startAdding(day: number) {
-    setAddingDay(day);
-    setPendingPictogramId(null);
-    setPendingTitle("");
+    setForm({ activityId: null, day, pictogramId: null, title: "", time: "", pickingPictogram: true });
   }
 
-  function cancelAdding() {
-    setAddingDay(null);
-    setPendingPictogramId(null);
-    setPendingTitle("");
+  function startEditing(activity: Activity) {
+    setForm({
+      activityId: activity.id,
+      day: activity.day_of_week,
+      pictogramId: activity.pictogram_id,
+      title: activity.title,
+      time: activity.time_of_day?.slice(0, 5) ?? "",
+      pickingPictogram: false
+    });
+  }
+
+  function closeForm() {
+    setForm(null);
   }
 
   async function saveActivity() {
-    if (addingDay === null || !pendingPictogramId || !pendingTitle.trim() || !planId) return;
+    if (!form || !form.pictogramId || !form.title.trim() || !planId) return;
 
-    const dayActivities = activities.filter((a) => a.day_of_week === addingDay);
-    const nextSortOrder = dayActivities.length
-      ? Math.max(...dayActivities.map((a) => a.sort_order)) + 1
-      : 0;
+    const timeValue = form.time ? form.time : null;
 
-    const { data, error } = await supabase
-      .from("activities")
-      .insert({
-        weekly_plan_id: planId,
-        day_of_week: addingDay,
-        pictogram_id: pendingPictogramId,
-        title: pendingTitle.trim(),
-        sort_order: nextSortOrder
-      })
-      .select()
-      .single();
+    if (form.activityId) {
+      // Redigér eksisterende aktivitet
+      const { data, error } = await supabase
+        .from("activities")
+        .update({
+          pictogram_id: form.pictogramId,
+          title: form.title.trim(),
+          time_of_day: timeValue
+        })
+        .eq("id", form.activityId)
+        .select()
+        .single();
 
-    if (!error && data) {
-      setActivities((prev) => [...prev, data]);
+      if (!error && data) {
+        setActivities((prev) => prev.map((a) => (a.id === data.id ? data : a)));
+      }
+    } else {
+      // Ny aktivitet
+      const dayActivities = activities.filter((a) => a.day_of_week === form.day);
+      const nextSortOrder = dayActivities.length
+        ? Math.max(...dayActivities.map((a) => a.sort_order)) + 1
+        : 0;
+
+      const { data, error } = await supabase
+        .from("activities")
+        .insert({
+          weekly_plan_id: planId,
+          day_of_week: form.day,
+          pictogram_id: form.pictogramId,
+          title: form.title.trim(),
+          sort_order: nextSortOrder,
+          time_of_day: timeValue
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setActivities((prev) => [...prev, data]);
+      }
     }
-    cancelAdding();
+
+    closeForm();
   }
 
   async function deleteActivity(activityId: string) {
     const { error } = await supabase.from("activities").delete().eq("id", activityId);
     if (!error) {
       setActivities((prev) => prev.filter((a) => a.id !== activityId));
+      if (form?.activityId === activityId) closeForm();
     }
   }
 
@@ -138,20 +183,37 @@ export default function WeeklyPlanEditor() {
 
       <div className="editor-days">
         {DAY_NAMES.map((dayName, dayIndex) => {
-          const dayActivities = activities.filter((a) => a.day_of_week === dayIndex);
+          const dayActivities = sortDayActivities(
+            activities.filter((a) => a.day_of_week === dayIndex)
+          );
+          const isFormOpenHere = form && form.day === dayIndex;
+
           return (
             <section key={dayIndex} className={`editor-day-column day-${dayIndex}`}>
               <h2>{dayName}</h2>
               <ul>
                 {dayActivities.map((activity) => (
                   <li key={activity.id} className="editor-activity">
-                    <img
-                      src={pictogramImageUrl(activity.pictogram_id, 300)}
-                      alt=""
-                      width={48}
-                      height={48}
-                    />
-                    <span>{activity.title}</span>
+                    <button
+                      type="button"
+                      className="editor-activity-edit"
+                      onClick={() => startEditing(activity)}
+                    >
+                      <img
+                        src={pictogramImageUrl(activity.pictogram_id, 300)}
+                        alt=""
+                        width={48}
+                        height={48}
+                      />
+                      <span className="editor-activity-text">
+                        {activity.time_of_day && (
+                          <span className="editor-activity-time">
+                            {activity.time_of_day.slice(0, 5)}
+                          </span>
+                        )}
+                        {activity.title}
+                      </span>
+                    </button>
                     <button
                       type="button"
                       className="btn-icon"
@@ -164,39 +226,52 @@ export default function WeeklyPlanEditor() {
                 ))}
               </ul>
 
-              {addingDay === dayIndex ? (
+              {isFormOpenHere ? (
                 <div className="add-activity-form">
-                  {pendingPictogramId ? (
+                  {form.pickingPictogram ? (
+                    <PictogramPicker
+                      onSelect={(id) =>
+                        setForm((prev) => (prev ? { ...prev, pictogramId: id, pickingPictogram: false } : prev))
+                      }
+                      onClose={closeForm}
+                    />
+                  ) : (
                     <>
-                      <img
-                        src={pictogramImageUrl(pendingPictogramId, 300)}
-                        alt=""
-                        width={48}
-                        height={48}
-                      />
+                      <button
+                        type="button"
+                        className="editor-picto-preview"
+                        onClick={() => setForm((prev) => (prev ? { ...prev, pickingPictogram: true } : prev))}
+                      >
+                        {form.pictogramId && (
+                          <img src={pictogramImageUrl(form.pictogramId, 300)} alt="" width={48} height={48} />
+                        )}
+                        <span className="btn-icon">Skift piktogram</span>
+                      </button>
                       <input
                         type="text"
                         placeholder="Titel"
-                        value={pendingTitle}
-                        onChange={(e) => setPendingTitle(e.target.value)}
+                        value={form.title}
+                        onChange={(e) => setForm((prev) => (prev ? { ...prev, title: e.target.value } : prev))}
                         autoFocus
+                      />
+                      <label htmlFor={`time-${dayIndex}`}>Klokkeslæt (valgfrit)</label>
+                      <input
+                        id={`time-${dayIndex}`}
+                        type="time"
+                        value={form.time}
+                        onChange={(e) => setForm((prev) => (prev ? { ...prev, time: e.target.value } : prev))}
                       />
                       <button
                         type="button"
                         className="btn btn-primary btn-small"
                         onClick={saveActivity}
-                        disabled={!pendingTitle.trim()}
+                        disabled={!form.title.trim()}
                       >
                         Gem
                       </button>
                     </>
-                  ) : (
-                    <PictogramPicker
-                      onSelect={(id) => setPendingPictogramId(id)}
-                      onClose={cancelAdding}
-                    />
                   )}
-                  <button type="button" className="btn btn-ghost btn-small" onClick={cancelAdding}>
+                  <button type="button" className="btn btn-ghost btn-small" onClick={closeForm}>
                     Annullér
                   </button>
                 </div>

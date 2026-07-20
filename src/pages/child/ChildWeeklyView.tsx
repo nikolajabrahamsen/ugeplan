@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { pictogramImageUrl } from "../../lib/arasaac";
 
@@ -9,6 +9,7 @@ interface Activity {
   pictogram_id: string;
   title: string;
   sort_order: number;
+  time_of_day: string | null;
   completed_at: string | null;
 }
 
@@ -27,10 +28,21 @@ function mondayOfCurrentWeek(): string {
   return monday.toISOString().slice(0, 10);
 }
 
+/** Sorterer så aktiviteter med klokkeslæt kommer i tidsrækkefølge, og de uden i deres oprindelige rækkefølge til sidst. */
+function sortDayActivities(activities: Activity[]): Activity[] {
+  return [...activities].sort((a, b) => {
+    if (a.time_of_day && b.time_of_day) return a.time_of_day.localeCompare(b.time_of_day);
+    if (a.time_of_day) return -1;
+    if (b.time_of_day) return 1;
+    return a.sort_order - b.sort_order;
+  });
+}
+
 /**
  * Låst "kiosk"-visning for barnet: kun den aktuelle uge, piktogram + titel
  * pr. aktivitet, og mulighed for at markere en aktivitet som gennemført.
- * Denne visning skal IKKE indeholde navigation til forældre-delen.
+ * Har et lille "skift barn"-link tilbage til profilvalget, men INTET link
+ * til forældre-delen af appen.
  */
 export default function ChildWeeklyView() {
   const { childId } = useParams<{ childId: string }>();
@@ -56,7 +68,7 @@ export default function ChildWeeklyView() {
 
       const { data: acts, error } = await supabase
         .from("activities")
-        .select("id, day_of_week, pictogram_id, title, sort_order, completed_at")
+        .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day, completed_at")
         .eq("weekly_plan_id", plan.id)
         .order("day_of_week")
         .order("sort_order");
@@ -88,40 +100,52 @@ export default function ChildWeeklyView() {
   const todayIndex = currentDayIndex();
 
   return (
-    <div className="child-week-view">
-      {DAY_NAMES.map((dayName, dayIndex) => {
-        const dayActivities = activities.filter((a) => a.day_of_week === dayIndex);
-        if (dayActivities.length === 0) return null;
+    <div>
+      <Link to="/child" className="child-back-link">
+        ← Skift barn
+      </Link>
+      <div className="child-week-view">
+        {DAY_NAMES.map((dayName, dayIndex) => {
+          const dayActivities = sortDayActivities(
+            activities.filter((a) => a.day_of_week === dayIndex)
+          );
+          if (dayActivities.length === 0) return null;
 
-        return (
-          <section
-            key={dayIndex}
-            className={`day-column day-${dayIndex} ${dayIndex === todayIndex ? "is-today" : ""}`}
-          >
-            <h2>
-              {dayName}
-              {dayIndex === todayIndex && <span className="today-badge">I dag</span>}
-            </h2>
-            <div className="activity-list">
-              {dayActivities.map((activity) => (
-                <button
-                  key={activity.id}
-                  className={`activity-card ${activity.completed_at ? "completed" : ""}`}
-                  onClick={() => toggleComplete(activity)}
-                >
-                  <img
-                    src={pictogramImageUrl(activity.pictogram_id)}
-                    alt=""
-                    width={140}
-                    height={140}
-                  />
-                  <span className="activity-title">{activity.title}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+          return (
+            <section
+              key={dayIndex}
+              className={`day-column day-${dayIndex} ${dayIndex === todayIndex ? "is-today" : ""}`}
+            >
+              <h2>
+                {dayName}
+                {dayIndex === todayIndex && <span className="today-badge">I dag</span>}
+              </h2>
+              <div className="activity-list">
+                {dayActivities.map((activity) => (
+                  <button
+                    key={activity.id}
+                    className={`activity-card ${activity.completed_at ? "completed" : ""}`}
+                    onClick={() => toggleComplete(activity)}
+                  >
+                    <img
+                      src={pictogramImageUrl(activity.pictogram_id)}
+                      alt=""
+                      width={140}
+                      height={140}
+                    />
+                    <span className="activity-title">
+                      {activity.time_of_day && (
+                        <span className="activity-time">{activity.time_of_day.slice(0, 5)}</span>
+                      )}
+                      {activity.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
