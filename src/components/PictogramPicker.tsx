@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { searchPictograms, pictogramImageUrl, type ArasaacPictogram } from "../lib/arasaac";
+import {
+  searchPictograms,
+  pictogramImageUrl,
+  pictogramId,
+  pictogramKeyword,
+  type ArasaacPictogram
+} from "../lib/arasaac";
 
 interface Props {
   onSelect: (pictogramId: string) => void;
@@ -25,7 +31,8 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
     setError(null);
     try {
       const found = await searchPictograms(query.trim());
-      setResults(found.slice(0, 24)); // begræns til en overskuelig mængde
+      // Kun tag piktogrammer hvor vi rent faktisk kan udlede et id
+      setResults(found.filter((p) => pictogramId(p) !== undefined).slice(0, 24));
     } catch {
       setError("Kunne ikke hente piktogrammer lige nu. Prøv igen.");
     } finally {
@@ -59,17 +66,20 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
         {error && <p className="error">{error}</p>}
 
         <div className="pictogram-results">
-          {results.map((pictogram) => (
-            <button
-              key={pictogram.id}
-              type="button"
-              className="pictogram-result"
-              onClick={() => onSelect(String(pictogram.id))}
-            >
-              <img src={pictogramImageUrl(pictogram.id, 300)} alt="" width={100} height={100} />
-              <span>{pictogram.keywords[0]?.keyword ?? ""}</span>
-            </button>
-          ))}
+          {results.map((pictogram) => {
+            const id = pictogramId(pictogram)!;
+            return (
+              <button
+                key={id}
+                type="button"
+                className="pictogram-result"
+                onClick={() => onSelect(String(id))}
+              >
+                <img src={pictogramImageUrl(id, 300)} alt="" width={100} height={100} />
+                <span>{pictogramKeyword(pictogram)}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
