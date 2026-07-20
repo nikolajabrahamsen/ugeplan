@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { listFamilyParents, inviteParent, type FamilyParent } from "../lib/family";
+import { supabase } from "../lib/supabaseClient";
+import { listFamilyParents, inviteParent, removeParent, type FamilyParent } from "../lib/family";
 
 interface Props {
   familyId: string;
@@ -7,10 +8,13 @@ interface Props {
 
 export default function FamilyParents({ familyId }: Props) {
   const [parents, setParents] = useState<FamilyParent[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingUserId, setConfirmingUserId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   async function loadParents() {
     try {
@@ -23,6 +27,7 @@ export default function FamilyParents({ familyId }: Props) {
 
   useEffect(() => {
     loadParents();
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [familyId]);
 
@@ -45,12 +50,64 @@ export default function FamilyParents({ familyId }: Props) {
     }
   }
 
+  async function handleRemove(userId: string) {
+    setRemoving(true);
+    setError(null);
+    try {
+      await removeParent(familyId, userId);
+      setConfirmingUserId(null);
+      await loadParents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke fjerne forælderen.");
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   return (
     <div className="card family-parents">
       <h3>Forældre i familien</h3>
       <ul className="parent-list">
         {parents.map((parent) => (
-          <li key={parent.user_id}>{parent.email}</li>
+          <li key={parent.user_id} className="parent-row">
+            {confirmingUserId === parent.user_id ? (
+              <span className="parent-confirm">
+                Fjern {parent.email}?
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => handleRemove(parent.user_id)}
+                  disabled={removing}
+                >
+                  {removing ? "Fjerner..." : "Ja, fjern"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => setConfirmingUserId(null)}
+                  disabled={removing}
+                >
+                  Fortryd
+                </button>
+              </span>
+            ) : (
+              <>
+                <span>
+                  {parent.email}
+                  {parent.user_id === currentUserId && " (dig)"}
+                </span>
+                {parents.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn-icon"
+                    onClick={() => setConfirmingUserId(parent.user_id)}
+                  >
+                    Fjern
+                  </button>
+                )}
+              </>
+            )}
+          </li>
         ))}
       </ul>
 

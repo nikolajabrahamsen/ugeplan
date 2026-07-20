@@ -46,3 +46,12 @@ export async function inviteParent(familyId: string, email: string): Promise<voi
   });
   if (error) throw error;
 }
+
+/** Fjerner en forælder fra familien. Kan ikke fjerne den sidste tilbageværende forælder. */
+export async function removeParent(familyId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc("remove_family_member", {
+    target_family_id: familyId,
+    target_user_id: userId
+  });
+  if (error) throw error;
+}

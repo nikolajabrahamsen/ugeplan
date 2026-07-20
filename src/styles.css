@@ -765,8 +765,20 @@ input:focus {
   color: var(--color-ink-soft);
 }
 
-.parent-list li {
-  padding: 0.3rem 0;
+.parent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  gap: 0.5rem;
+}
+
+.parent-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--color-accent-coral);
 }
 
 .invite-form {
