@@ -8,6 +8,15 @@ import RequireAuth from "./components/RequireAuth";
 import ChildProfilePicker from "./pages/child/ChildProfilePicker";
 import ChildWeeklyView from "./pages/child/ChildWeeklyView";
 import PairDevice from "./pages/child/PairDevice";
+
+// Selv-hostede fonte (ingen ekstern Google Fonts-forbindelse - vigtigt
+// både for offline-brug og for at holde data inden for egen infrastruktur)
+import "@fontsource/baloo-2/500.css";
+import "@fontsource/baloo-2/600.css";
+import "@fontsource/baloo-2/700.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

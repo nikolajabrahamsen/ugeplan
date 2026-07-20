@@ -12,8 +12,8 @@ export default defineConfig({
         name: "Ugeplan",
         short_name: "Ugeplan",
         description: "Piktogram-baseret ugeplan for børn",
-        theme_color: "#2E7D6B",
-        background_color: "#ffffff",
+        theme_color: "#1B8272",
+        background_color: "#F7F9FB",
         display: "standalone",
         start_url: "/",
         icons: [
@@ -22,8 +22,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // App-skal og statiske assets: cache-first, så appen altid åbner
-        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        // App-skal, fonte og statiske assets: cache-first, så appen altid åbner
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         runtimeCaching: [
           {
             // ARASAAC-piktogrammer: cache-first, lang levetid (de ændrer sig ikke)

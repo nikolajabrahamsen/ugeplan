@@ -124,19 +124,23 @@ export default function WeeklyPlanEditor() {
     }
   }
 
-  if (loading) return <p>Henter ugeplan...</p>;
+  if (loading) return <p className="loading-text">Henter ugeplan...</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div className="weekly-plan-editor">
-      <Link to="/parent">← Tilbage til oversigt</Link>
-      <h1>Redigér denne uges plan</h1>
+    <div className="app-shell">
+      <header className="app-header">
+        <Link to="/parent" className="back-link">
+          ← Oversigt
+        </Link>
+        <h1>Denne uges plan</h1>
+      </header>
 
       <div className="editor-days">
         {DAY_NAMES.map((dayName, dayIndex) => {
           const dayActivities = activities.filter((a) => a.day_of_week === dayIndex);
           return (
-            <section key={dayIndex} className="editor-day-column">
+            <section key={dayIndex} className={`editor-day-column day-${dayIndex}`}>
               <h2>{dayName}</h2>
               <ul>
                 {dayActivities.map((activity) => (
@@ -144,12 +148,17 @@ export default function WeeklyPlanEditor() {
                     <img
                       src={pictogramImageUrl(activity.pictogram_id, 300)}
                       alt=""
-                      width={60}
-                      height={60}
+                      width={48}
+                      height={48}
                     />
                     <span>{activity.title}</span>
-                    <button type="button" onClick={() => deleteActivity(activity.id)}>
-                      Slet
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      onClick={() => deleteActivity(activity.id)}
+                      aria-label={`Slet ${activity.title}`}
+                    >
+                      ✕
                     </button>
                   </li>
                 ))}
@@ -162,8 +171,8 @@ export default function WeeklyPlanEditor() {
                       <img
                         src={pictogramImageUrl(pendingPictogramId, 300)}
                         alt=""
-                        width={60}
-                        height={60}
+                        width={48}
+                        height={48}
                       />
                       <input
                         type="text"
@@ -172,7 +181,12 @@ export default function WeeklyPlanEditor() {
                         onChange={(e) => setPendingTitle(e.target.value)}
                         autoFocus
                       />
-                      <button type="button" onClick={saveActivity} disabled={!pendingTitle.trim()}>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-small"
+                        onClick={saveActivity}
+                        disabled={!pendingTitle.trim()}
+                      >
                         Gem
                       </button>
                     </>
@@ -182,12 +196,16 @@ export default function WeeklyPlanEditor() {
                       onClose={cancelAdding}
                     />
                   )}
-                  <button type="button" onClick={cancelAdding}>
+                  <button type="button" className="btn btn-ghost btn-small" onClick={cancelAdding}>
                     Annullér
                   </button>
                 </div>
               ) : (
-                <button type="button" onClick={() => startAdding(dayIndex)}>
+                <button
+                  type="button"
+                  className="btn btn-add-activity"
+                  onClick={() => startAdding(dayIndex)}
+                >
                   + Tilføj aktivitet
                 </button>
               )}

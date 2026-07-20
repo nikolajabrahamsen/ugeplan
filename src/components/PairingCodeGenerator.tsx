@@ -40,7 +40,7 @@ export default function PairingCodeGenerator({ childId, childName }: Props) {
           Indtast den på {childName}s iPad/telefon under "Tilknyt denne enhed" inden 10 minutter.
         </p>
       ) : (
-        <button type="button" onClick={handleGenerate} disabled={loading}>
+        <button type="button" className="btn btn-secondary btn-small" onClick={handleGenerate} disabled={loading}>
           {loading ? "Genererer..." : `Generér kode til ${childName}s enhed`}
         </button>
       )}

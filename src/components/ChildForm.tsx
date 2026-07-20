@@ -36,7 +36,7 @@ export default function ChildForm({ familyId, onCreated }: Props) {
   }
 
   return (
-    <form className="child-form" onSubmit={handleSubmit}>
+    <form className="child-form card" onSubmit={handleSubmit}>
       <h3>Tilføj barn</h3>
       <label htmlFor="child-name">Navn</label>
       <input
@@ -55,8 +55,8 @@ export default function ChildForm({ familyId, onCreated }: Props) {
         min={2000}
         max={2030}
       />
-      <button type="submit" disabled={saving}>
-        {saving ? "Gemmer..." : "Tilføj"}
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving ? "Gemmer..." : "Tilføj barn"}
       </button>
       {error && <p className="error">{error}</p>}
     </form>

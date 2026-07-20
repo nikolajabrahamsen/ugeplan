@@ -32,7 +32,7 @@ export default function ChildProfilePicker() {
 
   return (
     <div className="profile-picker">
-      <h1>Hvem er du?</h1>
+      <h1>Hvem er du? 👋</h1>
       <div className="profile-grid">
         {children.map((child) => (
           <button
@@ -40,13 +40,15 @@ export default function ChildProfilePicker() {
             className="profile-card"
             onClick={() => navigate(`/child/${child.id}/week`)}
           >
-            {child.avatar_pictogram_id && (
+            {child.avatar_pictogram_id ? (
               <img
                 src={pictogramImageUrl(child.avatar_pictogram_id)}
                 alt=""
                 width={120}
                 height={120}
               />
+            ) : (
+              <span className="profile-card-initial">{child.name.charAt(0).toUpperCase()}</span>
             )}
             <span>{child.name}</span>
           </button>

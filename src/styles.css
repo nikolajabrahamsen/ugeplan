@@ -1,67 +1,613 @@
-/* Grundlæggende, tilgængelig styling - store trykflader og høj kontrast,
-   da målgruppen er børn med udfordringer (fx motoriske eller kognitive). */
+/* ============================================================
+   Ugeplan - designsystem
+   ============================================================
+   Koncept: "ugen som en dag der folder sig ud" - hver ugedag har
+   sin egen rolige pastelfarve (en anerkendt metode i piktogram-baseret
+   specialpædagogik: børn genkender "onsdag" som "den grønne dag" før
+   de kan læse ordet). Gennemførte aktiviteter får et lille
+   klistermærke-stempel som positiv, håndgribelig feedback.
+
+   To skrifttyper med hver sit formål:
+   - Baloo 2 (rund, venlig) til overskrifter og alt børnevendt UI
+   - Inter (rolig, neutral) til brødtekst og forældre-værktøjer
+   ============================================================ */
 
 :root {
-  --color-bg: #ffffff;
-  --color-primary: #2e7d6b;
-  --color-text: #1a1a1a;
-  --color-completed: #cdeee2;
-  font-family: system-ui, sans-serif;
+  /* Farver */
+  --color-bg: #F7F9FB;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #EEF2F5;
+  --color-ink: #1F2A37;
+  --color-ink-soft: #5B6B7A;
+  --color-border: #E1E7EC;
+
+  --color-primary: #1B8272;
+  --color-primary-dark: #146157;
+  --color-primary-soft: #DCEFEA;
+
+  --color-accent-sun: #F4B740;
+  --color-accent-coral: #FF6B5E;
+  --color-accent-coral-soft: #FFE4E0;
+
+  /* Ugedags-farver - "morgenhimlen henover ugen" */
+  --day-0-color: #FFDCB4; /* mandag - solopgang */
+  --day-1-color: #FFEFAE; /* tirsdag */
+  --day-2-color: #C9F1C0; /* onsdag */
+  --day-3-color: #B8E9EC; /* torsdag */
+  --day-4-color: #B9CFFB; /* fredag */
+  --day-5-color: #D3C3F5; /* lørdag */
+  --day-6-color: #F8C6DE; /* søndag - aftenrøde */
+
+  /* Type */
+  --font-display: "Baloo 2", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Form */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-card: 0 2px 8px rgba(31, 42, 55, 0.06), 0 1px 2px rgba(31, 42, 55, 0.04);
+  --shadow-raised: 0 8px 24px rgba(31, 42, 55, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   background: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-.profile-grid,
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0 0 0.5em;
+  color: var(--color-ink);
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.25rem; }
+
+p { margin: 0 0 1em; }
+
+a {
+  color: var(--color-primary-dark);
+}
+
+/* Tilgængelighed: tydelig fokusring, og respekter reduced-motion */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Formularelementer --- */
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-ink-soft);
+  margin: 0.75rem 0 0.25rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="number"] {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+input:focus {
+  border-color: var(--color-primary);
+}
+
+/* --- Knapper --- */
+
+.btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-card);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink-soft);
+}
+
+.btn-ghost:hover {
+  background: var(--color-surface-alt);
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-icon:hover {
+  background: var(--color-surface-alt);
+}
+
+.btn-add-activity {
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+}
+
+.btn-add-activity:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.switch-to-child-view {
+  margin-top: 2rem;
+  text-decoration: none;
+}
+
+/* --- App-skal (forældre-sider) --- */
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.app-header h1 {
+  margin: 0;
+}
+
+.back-link {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.back-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.loading-text,
+.empty-state {
+  color: var(--color-ink-soft);
+  font-family: var(--font-body);
+}
+
+.error {
+  color: var(--color-accent-coral);
+  background: var(--color-accent-coral-soft);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+/* --- Auth-skærme (login / enheds-parring) --- */
+
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-raised);
+  padding: 2.5rem 2rem;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+
+.app-logo-mark {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-card h1 {
+  font-size: 1.4rem;
+}
+
+.auth-card form {
+  text-align: left;
+}
+
+.auth-confirmation {
+  color: var(--color-ink-soft);
+}
+
+.pairing-code-input {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* --- Kort (generisk) --- */
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+}
+
+/* --- Børneliste og parring (forældre-dashboard) --- */
+
+.children-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.child-row {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.child-row-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.child-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.child-name-link {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.child-name-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.child-form {
+  max-width: 360px;
+  margin-top: 1.5rem;
+}
+
+.child-form h3 {
+  margin-top: 0;
+}
+
+.pairing-code-box {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  padding-left: 3.25rem; /* aligner med barnets navn, ikke avataren */
+}
+
+.pairing-code {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.25em;
+  color: var(--color-primary-dark);
+}
+
+/* --- Profilvalg (barnets "hvem er du?"-skærm) --- */
+
+.profile-picker {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.profile-picker h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  padding: 1.5rem;
+  min-width: 160px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-raised);
+}
+
+.profile-card-initial {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.pair-device-link {
+  margin-top: 2.5rem;
+  font-size: 0.9rem;
+}
+
+.pair-device-link a {
+  color: var(--color-ink-soft);
+}
+
+/* --- Barnets ugevisning (kiosk) --- */
+
 .child-week-view {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
   padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.profile-card,
-.activity-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  border: 3px solid var(--color-primary);
-  border-radius: 16px;
-  background: white;
-  padding: 1rem;
-  min-width: 160px;
-  min-height: 160px;
-  font-size: 1.25rem;
-  cursor: pointer;
+.day-column {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  min-width: 260px;
+  flex: 1 1 260px;
+  border-top: 6px solid var(--day-color, var(--color-primary));
+  box-shadow: var(--shadow-card);
 }
 
-.activity-card.completed {
-  background: var(--color-completed);
-  opacity: 0.7;
+.day-column.day-0 { --day-color: var(--day-0-color); }
+.day-column.day-1 { --day-color: var(--day-1-color); }
+.day-column.day-2 { --day-color: var(--day-2-color); }
+.day-column.day-3 { --day-color: var(--day-3-color); }
+.day-column.day-4 { --day-color: var(--day-4-color); }
+.day-column.day-5 { --day-color: var(--day-5-color); }
+.day-column.day-6 { --day-color: var(--day-6-color); }
+
+.day-column.is-today {
+  box-shadow: var(--shadow-raised);
+  transform: scale(1.02);
 }
 
 .day-column h2 {
-  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
 }
 
-/* --- Forældre: ugeplan-editor og piktogram-vælger --- */
+.today-badge {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--day-color, var(--color-primary-soft));
+  color: var(--color-ink);
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.activity-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.activity-card:active {
+  transform: scale(0.98);
+}
+
+.activity-card img {
+  border-radius: var(--radius-sm);
+  background: white;
+  flex-shrink: 0;
+}
+
+.activity-title {
+  flex: 1;
+}
+
+.activity-card.completed {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.activity-card.completed img {
+  opacity: 0.7;
+}
+
+/* "Klistermærke-stempel" på gennemførte aktiviteter */
+.activity-card.completed::after {
+  content: "✓";
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* --- Forældre: ugeplan-editor --- */
 
 .editor-days {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  padding: 1rem 0;
+  gap: 1.25rem;
 }
 
 .editor-day-column {
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   padding: 1rem;
   min-width: 220px;
+  flex: 1 1 220px;
+  border-top: 5px solid var(--day-color, var(--color-primary));
+  box-shadow: var(--shadow-card);
+}
+
+.editor-day-column.day-0 { --day-color: var(--day-0-color); }
+.editor-day-column.day-1 { --day-color: var(--day-1-color); }
+.editor-day-column.day-2 { --day-color: var(--day-2-color); }
+.editor-day-column.day-3 { --day-color: var(--day-3-color); }
+.editor-day-column.day-4 { --day-color: var(--day-4-color); }
+.editor-day-column.day-5 { --day-color: var(--day-5-color); }
+.editor-day-column.day-6 { --day-color: var(--day-6-color); }
+
+.editor-day-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .editor-activity {
@@ -69,10 +615,19 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+}
+
+.editor-activity img {
+  border-radius: 6px;
+  background: white;
 }
 
 .editor-activity span {
   flex: 1;
+  font-size: 0.9rem;
 }
 
 .add-activity-form {
@@ -82,30 +637,44 @@ body {
   margin-top: 0.5rem;
 }
 
+/* --- Piktogram-vælger (modal) --- */
+
 .pictogram-picker-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(31, 42, 55, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
+  padding: 1rem;
 }
 
 .pictogram-picker {
-  background: white;
-  border-radius: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   max-width: 600px;
-  width: 90%;
+  width: 100%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: var(--shadow-raised);
 }
 
 .pictogram-picker-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.pictogram-search-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.pictogram-search-form input {
+  flex: 1;
 }
 
 .pictogram-results {
@@ -120,48 +689,41 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
   padding: 0.5rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  color: var(--color-ink-soft);
 }
 
-.child-form {
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 300px;
+.pictogram-result:hover {
+  border-color: var(--color-primary);
 }
 
-.error {
-  color: #c0392b;
+.pictogram-result img {
+  border-radius: 6px;
 }
 
-/* --- Enheds-parring --- */
+/* --- Mobil --- */
 
-.child-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border-bottom: 1px solid #eee;
-  padding: 0.75rem 0;
-}
+@media (max-width: 600px) {
+  .app-header {
+    flex-wrap: wrap;
+  }
 
-.pairing-code-box {
-  font-size: 0.9rem;
-}
+  .child-week-view,
+  .editor-days {
+    flex-direction: column;
+  }
 
-.pairing-code {
-  font-size: 1.5rem;
-  letter-spacing: 0.2em;
-  color: var(--color-primary);
-}
+  .profile-grid {
+    gap: 1rem;
+  }
 
-.pair-device-link {
-  margin-top: 2rem;
-  text-align: center;
-  font-size: 0.9rem;
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
 }

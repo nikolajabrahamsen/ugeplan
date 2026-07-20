@@ -14,6 +14,11 @@ interface Activity {
 
 const DAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
 
+function currentDayIndex(): number {
+  const jsDay = new Date().getDay(); // 0 = søndag i JS
+  return jsDay === 0 ? 6 : jsDay - 1; // omregnet til 0 = mandag, som resten af appen bruger
+}
+
 function mondayOfCurrentWeek(): string {
   const now = new Date();
   const day = now.getDay(); // 0 = søndag
@@ -78,7 +83,9 @@ export default function ChildWeeklyView() {
     }
   }
 
-  if (loading) return <p>Henter ugeplan...</p>;
+  if (loading) return <p className="loading-text">Henter ugeplan...</p>;
+
+  const todayIndex = currentDayIndex();
 
   return (
     <div className="child-week-view">
@@ -87,8 +94,14 @@ export default function ChildWeeklyView() {
         if (dayActivities.length === 0) return null;
 
         return (
-          <section key={dayIndex} className="day-column">
-            <h2>{dayName}</h2>
+          <section
+            key={dayIndex}
+            className={`day-column day-${dayIndex} ${dayIndex === todayIndex ? "is-today" : ""}`}
+          >
+            <h2>
+              {dayName}
+              {dayIndex === todayIndex && <span className="today-badge">I dag</span>}
+            </h2>
             <div className="activity-list">
               {dayActivities.map((activity) => (
                 <button

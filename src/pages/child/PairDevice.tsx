@@ -47,24 +47,30 @@ export default function PairDevice() {
 
   return (
     <div className="auth-screen">
-      <h1>Tilknyt denne enhed</h1>
-      <p>Bed en forælder om at generere en kode i appen, og indtast den her.</p>
-      <form onSubmit={handlePair}>
-        <label htmlFor="pairing-code">Kode</label>
-        <input
-          id="pairing-code"
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={6}
-          autoFocus
-          required
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Tilknytter..." : "Tilknyt"}
-        </button>
-      </form>
-      {error && <p className="error">{error}</p>}
+      <div className="auth-card">
+        <div className="app-logo-mark" aria-hidden="true">
+          📱
+        </div>
+        <h1>Tilknyt denne enhed</h1>
+        <p>Bed en forælder om at generere en kode i appen, og indtast den her.</p>
+        <form onSubmit={handlePair}>
+          <label htmlFor="pairing-code">Kode</label>
+          <input
+            id="pairing-code"
+            type="text"
+            className="pairing-code-input"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            autoFocus
+            required
+          />
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading ? "Tilknytter..." : "Tilknyt"}
+          </button>
+        </form>
+        {error && <p className="error">{error}</p>}
+      </div>
     </div>
   );
 }

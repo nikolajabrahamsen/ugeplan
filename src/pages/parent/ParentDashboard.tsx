@@ -27,6 +27,10 @@ export default function ParentDashboard() {
     if (!error && data) setChildren(data);
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+  }
+
   useEffect(() => {
     async function init() {
       try {
@@ -42,16 +46,31 @@ export default function ParentDashboard() {
     init();
   }, []);
 
-  if (loading) return <p>Henter...</p>;
+  if (loading) return <p className="loading-text">Henter...</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div className="parent-dashboard">
-      <h1>Jeres børn</h1>
+    <div className="app-shell">
+      <header className="app-header">
+        <h1>Ugeplan</h1>
+        <button type="button" className="btn-icon" onClick={handleSignOut} aria-label="Log ud">
+          Log ud
+        </button>
+      </header>
+
+      {children.length === 0 && (
+        <p className="empty-state">Tilføj jeres første barn for at komme i gang.</p>
+      )}
+
       <ul className="children-list">
         {children.map((child) => (
           <li key={child.id} className="child-row">
-            <Link to={`/parent/child/${child.id}/plan`}>{child.name} — redigér ugeplan</Link>
+            <div className="child-row-heading">
+              <span className="child-avatar">{child.name.charAt(0).toUpperCase()}</span>
+              <Link to={`/parent/child/${child.id}/plan`} className="child-name-link">
+                {child.name}
+              </Link>
+            </div>
             <PairingCodeGenerator childId={child.id} childName={child.name} />
           </li>
         ))}
@@ -60,9 +79,9 @@ export default function ParentDashboard() {
       {familyId && <ChildForm familyId={familyId} onCreated={loadChildren} />}
 
       {children.length > 0 && (
-        <p className="switch-to-child-view">
-          <Link to="/child">Skift til børnenes visning →</Link>
-        </p>
+        <Link to="/child" className="btn btn-secondary switch-to-child-view">
+          Skift til børnenes visning →
+        </Link>
       )}
     </div>
   );

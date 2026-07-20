@@ -38,12 +38,12 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
       <div className="pictogram-picker" onClick={(e) => e.stopPropagation()}>
         <div className="pictogram-picker-header">
           <h2>Vælg piktogram</h2>
-          <button type="button" onClick={onClose} aria-label="Luk">
+          <button type="button" className="btn-icon" onClick={onClose} aria-label="Luk">
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSearch}>
+        <form onSubmit={handleSearch} className="pictogram-search-form">
           <input
             type="text"
             placeholder="Søg (fx 'spise', 'skole', 'bad')"
@@ -51,7 +51,7 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
           />
-          <button type="submit" disabled={loading}>
+          <button type="submit" className="btn btn-primary btn-small" disabled={loading}>
             {loading ? "Søger..." : "Søg"}
           </button>
         </form>
