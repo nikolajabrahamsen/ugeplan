@@ -167,7 +167,7 @@ export default function ParentLogin() {
             <h1>Indtast kode</h1>
             <form onSubmit={handleVerifyCode}>
               <p className="auth-confirmation">
-                Vi har sendt en 6-cifret kode til <strong>{email}</strong>.
+                Vi har sendt en kode til <strong>{email}</strong>.
               </p>
               <label htmlFor="code">Kode</label>
               <input
@@ -177,7 +177,7 @@ export default function ParentLogin() {
                 inputMode="numeric"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                maxLength={6}
+                maxLength={8}
                 autoFocus
                 required
               />
