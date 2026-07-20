@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { pictogramImageUrl } from "../../lib/arasaac";
+import AnalogClock from "../../components/AnalogClock";
 
 interface Activity {
   id: string;
@@ -127,6 +128,9 @@ export default function ChildWeeklyView() {
                     className={`activity-card ${activity.completed_at ? "completed" : ""}`}
                     onClick={() => toggleComplete(activity)}
                   >
+                    {activity.time_of_day && (
+                      <AnalogClock time={activity.time_of_day.slice(0, 5)} size={44} />
+                    )}
                     <img
                       src={pictogramImageUrl(activity.pictogram_id)}
                       alt=""

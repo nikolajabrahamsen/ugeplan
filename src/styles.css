@@ -904,3 +904,48 @@ input:focus {
   gap: 0.5rem;
   margin-top: 1rem;
 }
+
+/* --- Analog urskive --- */
+
+.analog-clock {
+  flex-shrink: 0;
+}
+
+.analog-clock-face {
+  fill: white;
+  stroke: var(--color-ink-soft);
+  stroke-width: 3;
+}
+
+.activity-card.completed .analog-clock-face {
+  stroke: var(--color-primary-dark);
+}
+
+.analog-clock-tick {
+  stroke: var(--color-ink-soft);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.analog-clock-hand {
+  stroke: var(--color-ink);
+  stroke-linecap: round;
+}
+
+.analog-clock-hour {
+  stroke-width: 6;
+}
+
+.analog-clock-minute {
+  stroke-width: 4;
+}
+
+.analog-clock-center {
+  fill: var(--color-ink);
+}
+
+.time-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}

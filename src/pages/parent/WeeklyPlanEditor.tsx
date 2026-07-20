@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { pictogramImageUrl } from "../../lib/arasaac";
 import PictogramPicker from "../../components/PictogramPicker";
+import AnalogClock from "../../components/AnalogClock";
 
 interface Activity {
   id: string;
@@ -199,6 +200,9 @@ export default function WeeklyPlanEditor() {
                       className="editor-activity-edit"
                       onClick={() => startEditing(activity)}
                     >
+                      {activity.time_of_day && (
+                        <AnalogClock time={activity.time_of_day.slice(0, 5)} size={28} />
+                      )}
                       <img
                         src={pictogramImageUrl(activity.pictogram_id, 300)}
                         alt=""
@@ -255,12 +259,15 @@ export default function WeeklyPlanEditor() {
                         autoFocus
                       />
                       <label htmlFor={`time-${dayIndex}`}>Klokkeslæt (valgfrit)</label>
-                      <input
-                        id={`time-${dayIndex}`}
-                        type="time"
-                        value={form.time}
-                        onChange={(e) => setForm((prev) => (prev ? { ...prev, time: e.target.value } : prev))}
-                      />
+                      <div className="time-input-row">
+                        <input
+                          id={`time-${dayIndex}`}
+                          type="time"
+                          value={form.time}
+                          onChange={(e) => setForm((prev) => (prev ? { ...prev, time: e.target.value } : prev))}
+                        />
+                        {form.time && <AnalogClock time={form.time} size={36} />}
+                      </div>
                       <button
                         type="button"
                         className="btn btn-primary btn-small"
