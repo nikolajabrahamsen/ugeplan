@@ -66,6 +66,13 @@ stedet for at følge et login-link. Det kræver en ændring i Supabase:
 mailen indeholder koden i stedet for kun et link. Uden denne ændring
 sender Supabase stadig kun et link, og login-koden vil aldrig virke.
 
+Email-koden bruges nu **kun** første gang en forælder logger ind, samt
+ved "glemt adgangskode". Efter første login sætter forælderen selv en
+adgangskode (mindst 8 tegn), og logger ind med email + adgangskode
+derefter - se `ParentLogin.tsx`. Overvej også at sætte **Minimum
+password length** til 8 under **Authentication → Policies** i
+Supabase, så kravet også håndhæves server-side og ikke kun i appen.
+
 ## Vigtigt: Anonymous sign-ins skal slås til
 
 Enheds-parring (så et barns egen iPad/telefon kan bruges uden en
