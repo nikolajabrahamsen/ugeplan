@@ -223,6 +223,10 @@ export default function ParentLogin() {
         )}
 
         {error && <p className="error">{error}</p>}
+
+        <p className="pair-device-link">
+          <a href="/pair">Er det en barneenhed? Tilknyt den her</a>
+        </p>
       </div>
     </div>
   );
