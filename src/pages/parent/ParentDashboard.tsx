@@ -56,6 +56,12 @@ export default function ParentDashboard() {
       </ul>
 
       {familyId && <ChildForm familyId={familyId} onCreated={loadChildren} />}
+
+      {children.length > 0 && (
+        <p className="switch-to-child-view">
+          <Link to="/child">Skift til børnenes visning →</Link>
+        </p>
+      )}
     </div>
   );
 }

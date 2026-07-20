@@ -32,9 +32,26 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           }
         />
 
-        {/* Børne-del: låst "kiosk" visning, tilgås via profilvalg (PIN) efter forælder er logget ind */}
-        <Route path="/child" element={<ChildProfilePicker />} />
-        <Route path="/child/:childId/week" element={<ChildWeeklyView />} />
+        {/* Børne-del: låst "kiosk" visning. Beskyttet af samme RequireAuth
+            som forældre-delen, fordi børnene ikke har eget login - de
+            tilgås gennem den forælder der allerede er logget ind på
+            enheden (se profilvalget i ChildProfilePicker). */}
+        <Route
+          path="/child"
+          element={
+            <RequireAuth>
+              <ChildProfilePicker />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/child/:childId/week"
+          element={
+            <RequireAuth>
+              <ChildWeeklyView />
+            </RequireAuth>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
