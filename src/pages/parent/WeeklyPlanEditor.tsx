@@ -24,6 +24,7 @@ interface ActivityFormState {
   pickingPictogram: boolean;
   isRecurring: boolean;
   recurDays: number[];
+  alreadyRecurring: boolean; // true hvis den redigerede aktivitet allerede kommer fra en gentagelse
 }
 
 const DAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
@@ -99,7 +100,8 @@ export default function WeeklyPlanEditor() {
       time: "",
       pickingPictogram: true,
       isRecurring: false,
-      recurDays: [day]
+      recurDays: [day],
+      alreadyRecurring: false
     });
   }
 
@@ -112,7 +114,8 @@ export default function WeeklyPlanEditor() {
       time: activity.time_of_day?.slice(0, 5) ?? "",
       pickingPictogram: false,
       isRecurring: false,
-      recurDays: [activity.day_of_week]
+      recurDays: [activity.day_of_week],
+      alreadyRecurring: !!activity.recurring_activity_id
     });
   }
 
@@ -134,6 +137,46 @@ export default function WeeklyPlanEditor() {
 
     const timeValue = form.time ? form.time : null;
 
+    if (form.isRecurring && form.recurDays.length > 0) {
+      // Opret en ny gentagelses-skabelon. Hvis vi redigerer en allerede
+      // eksisterende aktivitet, kobles DEN sammen med skabelonen, så den
+      // ikke optræder dobbelt i den aktuelle uge.
+      const { data: newRecurring, error: recurError } = await supabase
+        .from("recurring_activities")
+        .insert({
+          child_id: childId,
+          pictogram_id: form.pictogramId,
+          title: form.title.trim(),
+          time_of_day: timeValue,
+          days_of_week: form.recurDays
+        })
+        .select()
+        .single();
+
+      if (recurError || !newRecurring) {
+        setError(recurError?.message ?? "Kunne ikke oprette gentagelsen");
+        closeForm();
+        return;
+      }
+
+      if (form.activityId) {
+        await supabase
+          .from("activities")
+          .update({
+            pictogram_id: form.pictogramId,
+            title: form.title.trim(),
+            time_of_day: timeValue,
+            recurring_activity_id: newRecurring.id
+          })
+          .eq("id", form.activityId);
+      }
+
+      closeForm();
+      setLoading(true);
+      await loadWeek();
+      return;
+    }
+
     if (form.activityId) {
       // Redigér eksisterende aktivitet (kun denne ene forekomst)
       const { data, error } = await supabase
@@ -151,29 +194,6 @@ export default function WeeklyPlanEditor() {
         setActivities((prev) => prev.map((a) => (a.id === data.id ? data : a)));
       }
       closeForm();
-      return;
-    }
-
-    if (form.isRecurring && form.recurDays.length > 0) {
-      // Opret en gentagelses-skabelon, og genindlæs ugen så den bliver
-      // materialiseret ind med det samme
-      const { error: recurError } = await supabase.from("recurring_activities").insert({
-        child_id: childId,
-        pictogram_id: form.pictogramId,
-        title: form.title.trim(),
-        time_of_day: timeValue,
-        days_of_week: form.recurDays
-      });
-
-      if (recurError) {
-        setError(recurError.message);
-        closeForm();
-        return;
-      }
-
-      closeForm();
-      setLoading(true);
-      await loadWeek();
       return;
     }
 
@@ -338,7 +358,7 @@ export default function WeeklyPlanEditor() {
                         {form.time && <AnalogClock time={form.time} size={36} />}
                       </div>
 
-                      {!form.activityId && (
+                      {!form.alreadyRecurring && (
                         <div className="recur-section">
                           <label className="recur-checkbox">
                             <input
