@@ -3,10 +3,10 @@ import { supabase } from "./supabaseClient";
 /**
  * Henter familien den aktuelle bruger er medlem af. Hvis brugeren endnu
  * ikke er medlem af nogen familie (fx allerførste login), oprettes en ny
- * familie og brugeren tilføjes som medlem. Se RLS-policies i
- * supabase/migrations - families_insert tillader oprettelse, og
- * family_members_insert tillader at man tilføjer sig selv til en familie
- * der endnu ingen medlemmer har.
+ * familie via RPC'en create_family, som opretter families- og
+ * family_members-rækken atomisk i databasen (se migration
+ * 20260720020000_fix_family_creation.sql for hvorfor det skal ske i ét
+ * atomisk skridt, og ikke to separate insert-kald fra klienten).
  */
 export async function getOrCreateFamily(): Promise<{ id: string; name: string }> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -27,22 +27,12 @@ export async function getOrCreateFamily(): Promise<{ id: string; name: string }>
     return family;
   }
 
-  // Ingen familie endnu - opret én
+  // Ingen familie endnu - opret én atomisk via RPC
   const { data: newFamily, error: familyError } = await supabase
-    .from("families")
-    .insert({ name: "Vores familie" })
-    .select()
+    .rpc("create_family", { family_name: "Vores familie" })
     .single();
 
   if (familyError || !newFamily) throw familyError ?? new Error("Kunne ikke oprette familie");
 
-  const { error: memberError } = await supabase.from("family_members").insert({
-    family_id: newFamily.id,
-    user_id: userData.user.id,
-    role: "parent"
-  });
-
-  if (memberError) throw memberError;
-
-  return newFamily;
+  return newFamily as { id: string; name: string };
 }
