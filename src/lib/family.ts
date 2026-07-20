@@ -2,11 +2,11 @@ import { supabase } from "./supabaseClient";
 
 /**
  * Henter familien den aktuelle bruger er medlem af. Hvis brugeren endnu
- * ikke er medlem af nogen familie (fx allerførste login), oprettes en ny
- * familie via RPC'en create_family, som opretter families- og
- * family_members-rækken atomisk i databasen (se migration
- * 20260720020000_fix_family_creation.sql for hvorfor det skal ske i ét
- * atomisk skridt, og ikke to separate insert-kald fra klienten).
+ * ikke er medlem af nogen familie, tilslutter eller opretter RPC'en
+ * join_or_create_family én atomisk i databasen: den tjekker først om
+ * der er en ventende invitation til brugerens email (se
+ * migration 20260720030000_multiple_parents.sql), og opretter kun en
+ * helt ny familie hvis der ikke er nogen invitation at tilslutte sig.
  */
 export async function getOrCreateFamily(): Promise<{ id: string; name: string }> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -14,25 +14,35 @@ export async function getOrCreateFamily(): Promise<{ id: string; name: string }>
     throw new Error("Ikke logget ind");
   }
 
-  const { data: existing, error: existingError } = await supabase
-    .from("family_members")
-    .select("family_id, families(id, name)")
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-
-  if (existing?.families) {
-    const family = existing.families as unknown as { id: string; name: string };
-    return family;
-  }
-
-  // Ingen familie endnu - opret én atomisk via RPC
-  const { data: newFamily, error: familyError } = await supabase
-    .rpc("create_family", { family_name: "Vores familie" })
+  const { data: family, error: familyError } = await supabase
+    .rpc("join_or_create_family", { family_name: "Vores familie" })
     .single();
 
-  if (familyError || !newFamily) throw familyError ?? new Error("Kunne ikke oprette familie");
+  if (familyError || !family) throw familyError ?? new Error("Kunne ikke hente familie");
 
-  return newFamily as { id: string; name: string };
+  return family as { id: string; name: string };
+}
+
+export interface FamilyParent {
+  user_id: string;
+  email: string;
+  joined_at: string;
+}
+
+/** Henter listen af forældre i familien (til visning i dashboardet). */
+export async function listFamilyParents(familyId: string): Promise<FamilyParent[]> {
+  const { data, error } = await supabase.rpc("list_family_parents", {
+    target_family_id: familyId
+  });
+  if (error) throw error;
+  return (data ?? []) as FamilyParent[];
+}
+
+/** Inviterer en anden forælder til familien ved email. */
+export async function inviteParent(familyId: string, email: string): Promise<void> {
+  const { error } = await supabase.rpc("invite_parent", {
+    target_family_id: familyId,
+    invite_email: email
+  });
+  if (error) throw error;
 }

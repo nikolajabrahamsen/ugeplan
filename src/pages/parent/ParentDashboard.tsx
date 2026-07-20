@@ -5,6 +5,7 @@ import { getOrCreateFamily } from "../../lib/family";
 import ChildForm from "../../components/ChildForm";
 import PairingCodeGenerator from "../../components/PairingCodeGenerator";
 import InstallAppPrompt from "../../components/InstallAppPrompt";
+import FamilyParents from "../../components/FamilyParents";
 
 interface Child {
   id: string;
@@ -80,6 +81,8 @@ export default function ParentDashboard() {
       </ul>
 
       {familyId && <ChildForm familyId={familyId} onCreated={loadChildren} />}
+
+      {familyId && <FamilyParents familyId={familyId} />}
 
       {children.length > 0 && (
         <Link to="/child" className="btn btn-secondary switch-to-child-view">

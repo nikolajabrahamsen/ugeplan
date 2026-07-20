@@ -742,3 +742,43 @@ input:focus {
   padding: 0.6rem 0.9rem;
   border-radius: var(--radius-sm);
 }
+
+.pictogram-empty-state {
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+/* --- Flere forældre / invitationer --- */
+
+.family-parents {
+  max-width: 360px;
+  margin-top: 1.5rem;
+}
+
+.parent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.parent-list li {
+  padding: 0.3rem 0;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.invite-success {
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}

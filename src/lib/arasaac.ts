@@ -15,10 +15,41 @@ export interface ArasaacPictogram {
   keywords?: { keyword?: string; text?: string }[];
 }
 
-/** Søg piktogrammer på dansk. Bruges kun i forældre-UI, ikke i børne-visningen. */
+/**
+ * Søg piktogrammer. ARASAAC's danske søgeord er langt fra så komplette som
+ * de spanske/engelske (dansk er et community-oversat sprog i biblioteket,
+ * og mange piktogrammer mangler simpelthen en dansk oversættelse selvom
+ * selve billedet findes). Derfor: søg dansk først, og suppler automatisk
+ * med en engelsk søgning hvis det danske resultat er sparsomt - så
+ * forælderen ser markant flere relevante piktogrammer, uden at skulle
+ * gætte hvilket sprog et givent piktogram er tagget på.
+ */
 export async function searchPictograms(query: string): Promise<ArasaacPictogram[]> {
+  const danish = await searchByLocale(query, "da");
+
+  if (danish.length >= MIN_RESULTS_BEFORE_FALLBACK) {
+    return danish;
+  }
+
+  const english = await searchByLocale(query, "en").catch(() => [] as ArasaacPictogram[]);
+
+  // Kombinér og fjern dubletter (samme piktogram kan findes i begge søgninger)
+  const seenIds = new Set<number>();
+  const combined: ArasaacPictogram[] = [];
+  for (const pictogram of [...danish, ...english]) {
+    const id = pictogramId(pictogram);
+    if (id === undefined || seenIds.has(id)) continue;
+    seenIds.add(id);
+    combined.push(pictogram);
+  }
+  return combined;
+}
+
+const MIN_RESULTS_BEFORE_FALLBACK = 6;
+
+async function searchByLocale(query: string, locale: "da" | "en"): Promise<ArasaacPictogram[]> {
   const res = await fetch(
-    `${ARASAAC_API_BASE}/pictograms/da/search/${encodeURIComponent(query)}`
+    `${ARASAAC_API_BASE}/pictograms/${locale}/search/${encodeURIComponent(query)}`
   );
   if (!res.ok) throw new Error(`ARASAAC-søgning fejlede: ${res.status}`);
   return res.json();

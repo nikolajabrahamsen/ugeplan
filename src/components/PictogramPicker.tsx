@@ -23,6 +23,7 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
   const [results, setResults] = useState<ArasaacPictogram[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -32,11 +33,12 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
     try {
       const found = await searchPictograms(query.trim());
       // Kun tag piktogrammer hvor vi rent faktisk kan udlede et id
-      setResults(found.filter((p) => pictogramId(p) !== undefined).slice(0, 24));
+      setResults(found.filter((p) => pictogramId(p) !== undefined).slice(0, 48));
     } catch {
       setError("Kunne ikke hente piktogrammer lige nu. Prøv igen.");
     } finally {
       setLoading(false);
+      setHasSearched(true);
     }
   }
 
@@ -64,6 +66,12 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
         </form>
 
         {error && <p className="error">{error}</p>}
+
+        {hasSearched && !loading && results.length === 0 && !error && (
+          <p className="pictogram-empty-state">
+            Ingen piktogrammer fundet for "{query}". Prøv et andet ord, gerne på engelsk.
+          </p>
+        )}
 
         <div className="pictogram-results">
           {results.map((pictogram) => {
