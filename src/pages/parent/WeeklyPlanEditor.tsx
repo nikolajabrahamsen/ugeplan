@@ -12,6 +12,7 @@ interface Activity {
   title: string;
   sort_order: number;
   time_of_day: string | null;
+  recurring_activity_id: string | null;
 }
 
 interface ActivityFormState {
@@ -21,9 +22,12 @@ interface ActivityFormState {
   title: string;
   time: string; // "HH:MM" eller ""
   pickingPictogram: boolean;
+  isRecurring: boolean;
+  recurDays: number[];
 }
 
 const DAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
+const DAY_SHORT = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
 
 function mondayOfCurrentWeek(): string {
   const now = new Date();
@@ -55,33 +59,25 @@ export default function WeeklyPlanEditor() {
     if (!childId) return;
     const weekStart = mondayOfCurrentWeek();
 
-    let { data: plan } = await supabase
-      .from("weekly_plans")
-      .select("id")
-      .eq("child_id", childId)
-      .eq("week_start_date", weekStart)
-      .maybeSingle();
+    // Finder/opretter ugeplanen OG materialiserer eventuelle gentagne
+    // aktiviteter ind i den, i én RPC
+    const { data: newPlanId, error: planError } = await supabase.rpc("ensure_week_materialized", {
+      target_child_id: childId,
+      week_start: weekStart
+    });
 
-    if (!plan) {
-      const { data: newPlan, error: createError } = await supabase
-        .from("weekly_plans")
-        .insert({ child_id: childId, week_start_date: weekStart })
-        .select()
-        .single();
-      if (createError) {
-        setError(createError.message);
-        setLoading(false);
-        return;
-      }
-      plan = newPlan;
+    if (planError || !newPlanId) {
+      setError(planError?.message ?? "Kunne ikke hente ugeplanen");
+      setLoading(false);
+      return;
     }
 
-    setPlanId(plan!.id);
+    setPlanId(newPlanId);
 
     const { data: acts, error: actsError } = await supabase
       .from("activities")
-      .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day")
-      .eq("weekly_plan_id", plan!.id)
+      .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day, recurring_activity_id")
+      .eq("weekly_plan_id", newPlanId)
       .order("day_of_week")
       .order("sort_order");
 
@@ -95,7 +91,16 @@ export default function WeeklyPlanEditor() {
   }, [childId]);
 
   function startAdding(day: number) {
-    setForm({ activityId: null, day, pictogramId: null, title: "", time: "", pickingPictogram: true });
+    setForm({
+      activityId: null,
+      day,
+      pictogramId: null,
+      title: "",
+      time: "",
+      pickingPictogram: true,
+      isRecurring: false,
+      recurDays: [day]
+    });
   }
 
   function startEditing(activity: Activity) {
@@ -105,7 +110,9 @@ export default function WeeklyPlanEditor() {
       pictogramId: activity.pictogram_id,
       title: activity.title,
       time: activity.time_of_day?.slice(0, 5) ?? "",
-      pickingPictogram: false
+      pickingPictogram: false,
+      isRecurring: false,
+      recurDays: [activity.day_of_week]
     });
   }
 
@@ -113,13 +120,22 @@ export default function WeeklyPlanEditor() {
     setForm(null);
   }
 
+  function toggleRecurDay(day: number) {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const has = prev.recurDays.includes(day);
+      const recurDays = has ? prev.recurDays.filter((d) => d !== day) : [...prev.recurDays, day];
+      return { ...prev, recurDays };
+    });
+  }
+
   async function saveActivity() {
-    if (!form || !form.pictogramId || !form.title.trim() || !planId) return;
+    if (!form || !form.pictogramId || !form.title.trim() || !planId || !childId) return;
 
     const timeValue = form.time ? form.time : null;
 
     if (form.activityId) {
-      // Redigér eksisterende aktivitet
+      // Redigér eksisterende aktivitet (kun denne ene forekomst)
       const { data, error } = await supabase
         .from("activities")
         .update({
@@ -134,31 +150,55 @@ export default function WeeklyPlanEditor() {
       if (!error && data) {
         setActivities((prev) => prev.map((a) => (a.id === data.id ? data : a)));
       }
-    } else {
-      // Ny aktivitet
-      const dayActivities = activities.filter((a) => a.day_of_week === form.day);
-      const nextSortOrder = dayActivities.length
-        ? Math.max(...dayActivities.map((a) => a.sort_order)) + 1
-        : 0;
-
-      const { data, error } = await supabase
-        .from("activities")
-        .insert({
-          weekly_plan_id: planId,
-          day_of_week: form.day,
-          pictogram_id: form.pictogramId,
-          title: form.title.trim(),
-          sort_order: nextSortOrder,
-          time_of_day: timeValue
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        setActivities((prev) => [...prev, data]);
-      }
+      closeForm();
+      return;
     }
 
+    if (form.isRecurring && form.recurDays.length > 0) {
+      // Opret en gentagelses-skabelon, og genindlæs ugen så den bliver
+      // materialiseret ind med det samme
+      const { error: recurError } = await supabase.from("recurring_activities").insert({
+        child_id: childId,
+        pictogram_id: form.pictogramId,
+        title: form.title.trim(),
+        time_of_day: timeValue,
+        days_of_week: form.recurDays
+      });
+
+      if (recurError) {
+        setError(recurError.message);
+        closeForm();
+        return;
+      }
+
+      closeForm();
+      setLoading(true);
+      await loadWeek();
+      return;
+    }
+
+    // Almindelig ny, enkeltstående aktivitet
+    const dayActivities = activities.filter((a) => a.day_of_week === form.day);
+    const nextSortOrder = dayActivities.length
+      ? Math.max(...dayActivities.map((a) => a.sort_order)) + 1
+      : 0;
+
+    const { data, error } = await supabase
+      .from("activities")
+      .insert({
+        weekly_plan_id: planId,
+        day_of_week: form.day,
+        pictogram_id: form.pictogramId,
+        title: form.title.trim(),
+        sort_order: nextSortOrder,
+        time_of_day: timeValue
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setActivities((prev) => [...prev, data]);
+    }
     closeForm();
   }
 
@@ -167,6 +207,20 @@ export default function WeeklyPlanEditor() {
     if (!error) {
       setActivities((prev) => prev.filter((a) => a.id !== activityId));
       if (form?.activityId === activityId) closeForm();
+    }
+  }
+
+  async function stopRecurring(recurringActivityId: string) {
+    // Slår skabelonen fra, så den ikke længere dukker op i fremtidige uger.
+    // Allerede-materialiserede forekomster (som denne uges) bliver stående.
+    const { error } = await supabase
+      .from("recurring_activities")
+      .update({ active: false })
+      .eq("id", recurringActivityId);
+    if (!error) {
+      setActivities((prev) =>
+        prev.map((a) => (a.recurring_activity_id === recurringActivityId ? { ...a, recurring_activity_id: null } : a))
+      );
     }
   }
 
@@ -215,9 +269,24 @@ export default function WeeklyPlanEditor() {
                             {activity.time_of_day.slice(0, 5)}
                           </span>
                         )}
+                        {activity.recurring_activity_id && (
+                          <span className="recurring-badge" title="Gentages">
+                            🔁
+                          </span>
+                        )}
                         {activity.title}
                       </span>
                     </button>
+                    {activity.recurring_activity_id && (
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => stopRecurring(activity.recurring_activity_id!)}
+                        title="Stop gentagelse fremover"
+                      >
+                        Stop gentagelse
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="btn-icon"
@@ -268,11 +337,53 @@ export default function WeeklyPlanEditor() {
                         />
                         {form.time && <AnalogClock time={form.time} size={36} />}
                       </div>
+
+                      {!form.activityId && (
+                        <div className="recur-section">
+                          <label className="recur-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={form.isRecurring}
+                              onChange={(e) =>
+                                setForm((prev) => (prev ? { ...prev, isRecurring: e.target.checked } : prev))
+                              }
+                            />
+                            Gentag denne aktivitet
+                          </label>
+
+                          {form.isRecurring && (
+                            <>
+                              <div className="recur-day-picker">
+                                {DAY_SHORT.map((label, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    className={`recur-day-toggle ${form.recurDays.includes(i) ? "active" : ""}`}
+                                    onClick={() => toggleRecurDay(i)}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-small"
+                                onClick={() =>
+                                  setForm((prev) => (prev ? { ...prev, recurDays: [0, 1, 2, 3, 4, 5, 6] } : prev))
+                                }
+                              >
+                                Hver dag
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         className="btn btn-primary btn-small"
                         onClick={saveActivity}
-                        disabled={!form.title.trim()}
+                        disabled={!form.title.trim() || (form.isRecurring && form.recurDays.length === 0)}
                       >
                         Gem
                       </button>

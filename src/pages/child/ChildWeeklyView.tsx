@@ -52,16 +52,15 @@ export default function ChildWeeklyView() {
 
   useEffect(() => {
     async function loadWeek() {
+      if (!childId) return;
       const weekStart = mondayOfCurrentWeek();
 
-      const { data: plan } = await supabase
-        .from("weekly_plans")
-        .select("id")
-        .eq("child_id", childId)
-        .eq("week_start_date", weekStart)
-        .maybeSingle();
+      const { data: planId, error: planError } = await supabase.rpc("ensure_week_materialized", {
+        target_child_id: childId,
+        week_start: weekStart
+      });
 
-      if (!plan) {
+      if (planError || !planId) {
         setActivities([]);
         setLoading(false);
         return;
@@ -70,7 +69,7 @@ export default function ChildWeeklyView() {
       const { data: acts, error } = await supabase
         .from("activities")
         .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day, completed_at")
-        .eq("weekly_plan_id", plan.id)
+        .eq("weekly_plan_id", planId)
         .order("day_of_week")
         .order("sort_order");
 
