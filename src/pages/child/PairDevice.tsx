@@ -23,9 +23,19 @@ export default function PairDevice() {
     setError(null);
 
     try {
-      // Opret (eller genbrug) en anonym session for denne enhed
+      // Sørg for en RENDYRKET anonym enheds-session før koden indløses.
+      // Hvis enheden allerede har en session (fx fordi en forælder tidligere
+      // har været logget ind på denne enhed for at teste), må den IKKE
+      // genbruges - ellers bliver parringen lavet på forælderens egen
+      // konto i stedet for enhedens egen, adskilte identitet, og enheden
+      // "husker" forkert at den er forælderens ved næste åbning.
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const isAlreadyAnonymousDevice = sessionData.session?.user.is_anonymous === true;
+
+      if (!isAlreadyAnonymousDevice) {
+        if (sessionData.session) {
+          await supabase.auth.signOut();
+        }
         const { error: anonError } = await supabase.auth.signInAnonymously();
         if (anonError) throw anonError;
       }

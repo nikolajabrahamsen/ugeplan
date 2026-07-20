@@ -19,11 +19,13 @@ export default function ParentLogin() {
 
   useEffect(() => {
     // Naviger til forældre-dashboardet så snart der er en aktiv session -
-    // MEN ikke hvis vi lige er midt i at sætte et nyt kodeord op, for så
-    // er brugeren allerede "logget ind" via koden, men mangler stadig
-    // at vælge sit kodeord.
+    // MEN kun hvis det rent faktisk er en forælders session, ikke en
+    // barne-enheds anonyme session (som aldrig skal ende i forælder-delen).
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && mode !== "setPassword" && mode !== "verifyCode") {
+      if (!session || mode === "setPassword" || mode === "verifyCode") return;
+      if (session.user.is_anonymous) {
+        navigate("/child");
+      } else {
         navigate("/parent");
       }
     });

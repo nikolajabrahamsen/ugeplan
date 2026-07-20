@@ -17,6 +17,7 @@ interface Child {
  */
 export default function ChildProfilePicker() {
   const [children, setChildren] = useState<Child[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,9 +27,26 @@ export default function ChildProfilePicker() {
         .select("id, name, avatar_pictogram_id")
         .order("name");
       if (!error && data) setChildren(data);
+      setLoaded(true);
     }
     loadChildren();
   }, []);
+
+  useEffect(() => {
+    async function maybeAutoSelect() {
+      if (!loaded || children.length !== 1) return;
+      // En parret barne-enhed har altid præcis ét barn synligt (RLS
+      // begrænser den til netop det barn den blev parret til) - så på en
+      // sådan enhed er der intet at vælge imellem, og vi springer direkte
+      // til ugeplanen for en glidende genåbning. En forælder med kun ét
+      // barn i familien rammer også denne, hvilket bare er lidt bekvemt.
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user.is_anonymous) {
+        navigate(`/child/${children[0].id}/week`, { replace: true });
+      }
+    }
+    maybeAutoSelect();
+  }, [loaded, children, navigate]);
 
   return (
     <div className="profile-picker">
