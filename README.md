@@ -56,6 +56,16 @@ Det der stadig mangler:
 - [ ] Mulighed for at redigere/slette børn og ændre rækkefølgen på
       aktiviteter (kun oprettelse og sletning er understøttet nu)
 
+## Vigtigt: forældre-login sender en kode, ikke et link
+
+`ParentLogin` bruger `verifyOtp` til at bekræfte en 6-cifret kode, i
+stedet for at følge et login-link. Det kræver en ændring i Supabase:
+
+**Authentication → Email Templates → Magic Link** - erstat
+`{{ .ConfirmationURL }}` med `{{ .Token }}` i skabelonens indhold, så
+mailen indeholder koden i stedet for kun et link. Uden denne ændring
+sender Supabase stadig kun et link, og login-koden vil aldrig virke.
+
 ## Vigtigt: Anonymous sign-ins skal slås til
 
 Enheds-parring (så et barns egen iPad/telefon kan bruges uden en

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
+import InstallAppPrompt from "../../components/InstallAppPrompt";
 
 /**
  * Åbnes på BARNETS EGEN enhed (uden at nogen forælder er logget ind der).
@@ -70,6 +71,7 @@ export default function PairDevice() {
           </button>
         </form>
         {error && <p className="error">{error}</p>}
+        <InstallAppPrompt />
       </div>
     </div>
   );

@@ -727,3 +727,18 @@ input:focus {
     padding: 2rem 1.5rem;
   }
 }
+
+/* --- Installér app-prompt --- */
+
+.install-prompt {
+  margin-bottom: 1.5rem;
+}
+
+.install-ios-help {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  background: var(--color-surface-alt);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+}

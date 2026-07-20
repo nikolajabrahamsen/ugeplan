@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateFamily } from "../../lib/family";
 import ChildForm from "../../components/ChildForm";
 import PairingCodeGenerator from "../../components/PairingCodeGenerator";
+import InstallAppPrompt from "../../components/InstallAppPrompt";
 
 interface Child {
   id: string;
@@ -57,6 +58,8 @@ export default function ParentDashboard() {
           Log ud
         </button>
       </header>
+
+      <InstallAppPrompt />
 
       {children.length === 0 && (
         <p className="empty-state">Tilføj jeres første barn for at komme i gang.</p>
