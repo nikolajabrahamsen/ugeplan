@@ -1105,3 +1105,9 @@ input:focus {
 .calendar-access-item input {
   width: auto;
 }
+
+.child-week-heading {
+  text-align: center;
+  font-size: 2rem;
+  margin: 0.5rem 0 0;
+}

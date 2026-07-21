@@ -49,7 +49,17 @@ function sortDayActivities(activities: Activity[]): Activity[] {
 export default function ChildWeeklyView() {
   const { childId } = useParams<{ childId: string }>();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [childName, setChildName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadChildName() {
+      if (!childId) return;
+      const { data } = await supabase.from("children").select("name").eq("id", childId).single();
+      if (data) setChildName(data.name);
+    }
+    loadChildName();
+  }, [childId]);
 
   useEffect(() => {
     async function loadWeek() {
@@ -105,6 +115,7 @@ export default function ChildWeeklyView() {
       <Link to="/child" className="child-back-link">
         ← Skift barn
       </Link>
+      {childName && <h1 className="child-week-heading">{childName}</h1>}
       <ReminderSetup />
       <div className="child-week-view">
         {DAY_NAMES.map((dayName, dayIndex) => {
