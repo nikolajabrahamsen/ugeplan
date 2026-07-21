@@ -1021,3 +1021,7 @@ input:focus {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
 }
+
+.reminder-setup {
+  margin-bottom: 1rem;
+}

@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { resolvePictogramImageUrl } from "../../lib/pictograms";
 import AnalogClock from "../../components/AnalogClock";
+import ReminderSetup from "../../components/ReminderSetup";
 
 interface Activity {
   id: string;
@@ -104,6 +105,7 @@ export default function ChildWeeklyView() {
       <Link to="/child" className="child-back-link">
         ← Skift barn
       </Link>
+      <ReminderSetup />
       <div className="child-week-view">
         {DAY_NAMES.map((dayName, dayIndex) => {
           const dayActivities = sortDayActivities(

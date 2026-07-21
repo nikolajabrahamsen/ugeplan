@@ -96,6 +96,52 @@ derfor ligger den kun server-side.
 Uden dette fejler kun OpenSymbols-delen af søgningen stille - ARASAAC
 virker stadig som hidtil, appen stopper ikke op af den grund.
 
+## Vigtigt: Påmindelser (push-notifikationer) kræver ekstra opsætning
+
+Aktiviteter kan markeres med en 🔔, som sender en rigtig
+push-notifikation på det angivne klokkeslæt - relevant til fx medicin.
+Det kræver flere trin, da det involverer rigtig serverstyret afsendelse:
+
+**1. Generér VAPID-nøgler** (identificerer jeres app over for
+push-tjenesterne - gør det én gang):
+```
+npx web-push generate-vapid-keys
+```
+
+**2. Sæt miljøvariabler op:**
+- I `.env` (og i Vercel's Environment Variables): tilføj
+  `VITE_VAPID_PUBLIC_KEY` med den offentlige nøgle
+- I Supabase, som function secrets:
+  ```
+  supabase secrets set VAPID_PUBLIC_KEY=<offentlig nøgle>
+  supabase secrets set VAPID_PRIVATE_KEY=<privat nøgle>
+  supabase secrets set VAPID_SUBJECT=mailto:jeres@email.dk
+  supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service_role key fra Project Settings -> API Keys>
+  ```
+  (`SUPABASE_URL` er allerede sat automatisk af Supabase for Edge Functions)
+
+**3. Deploy funktionen:**
+```
+supabase functions deploy send-reminders
+```
+
+**4. Sæt et Cron Job op, der kalder funktionen hvert minut:**
+Gå til **Database → Cron Jobs** i Supabase Dashboard → **Create a new
+cron job** → vælg **"Supabase Edge Function"** som type → peg på
+`send-reminders` → sæt skemaet til at køre hvert minut (`* * * * *`).
+Dashboard'et håndterer selv autorisationen af kaldet.
+
+**5. Slå påmindelser til på den enkelte enhed:**
+En bruger skal selv trykke "🔔 Slå påmindelser til på denne enhed"
+(vises på forældre-dashboardet og i barnets ugevisning) og give
+browseren lov til at vise notifikationer - det kan ikke gøres
+automatisk på deres vegne af tekniske/sikkerhedsmæssige grunde.
+
+**Begrænsning på iOS:** push-notifikationer virker kun hvis appen er
+**installeret** til hjemmeskærmen (se installations-knappen), og
+kræver iOS 16.4 eller nyere. Almindelig Safari-browsing understøtter
+det ikke.
+
 ## Vigtigt: Anonymous sign-ins skal slås til
 
 Enheds-parring (så et barns egen iPad/telefon kan bruges uden en

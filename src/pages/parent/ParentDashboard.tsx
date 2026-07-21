@@ -6,6 +6,7 @@ import { resolvePictogramImageUrl } from "../../lib/pictograms";
 import ChildForm from "../../components/ChildForm";
 import PairingCodeGenerator from "../../components/PairingCodeGenerator";
 import InstallAppPrompt from "../../components/InstallAppPrompt";
+import ReminderSetup from "../../components/ReminderSetup";
 import FamilyParents from "../../components/FamilyParents";
 import EditChildModal from "../../components/EditChildModal";
 
@@ -65,6 +66,7 @@ export default function ParentDashboard() {
       </header>
 
       <InstallAppPrompt />
+      <ReminderSetup />
 
       {children.length === 0 && (
         <p className="empty-state">Tilføj jeres første barn for at komme i gang.</p>

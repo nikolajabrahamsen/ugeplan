@@ -13,6 +13,7 @@ interface Activity {
   sort_order: number;
   time_of_day: string | null;
   recurring_activity_id: string | null;
+  reminder_enabled: boolean;
 }
 
 interface ActivityFormState {
@@ -25,6 +26,8 @@ interface ActivityFormState {
   isRecurring: boolean;
   recurDays: number[];
   alreadyRecurring: boolean; // true hvis den redigerede aktivitet allerede kommer fra en gentagelse
+  recurringActivityId: string | null;
+  reminderEnabled: boolean;
 }
 
 const DAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
@@ -77,7 +80,7 @@ export default function WeeklyPlanEditor() {
 
     const { data: acts, error: actsError } = await supabase
       .from("activities")
-      .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day, recurring_activity_id")
+      .select("id, day_of_week, pictogram_id, title, sort_order, time_of_day, recurring_activity_id, reminder_enabled")
       .eq("weekly_plan_id", newPlanId)
       .order("day_of_week")
       .order("sort_order");
@@ -101,7 +104,9 @@ export default function WeeklyPlanEditor() {
       pickingPictogram: true,
       isRecurring: false,
       recurDays: [day],
-      alreadyRecurring: false
+      alreadyRecurring: false,
+      recurringActivityId: null,
+      reminderEnabled: false
     });
   }
 
@@ -115,7 +120,9 @@ export default function WeeklyPlanEditor() {
       pickingPictogram: false,
       isRecurring: false,
       recurDays: [activity.day_of_week],
-      alreadyRecurring: !!activity.recurring_activity_id
+      alreadyRecurring: !!activity.recurring_activity_id,
+      recurringActivityId: activity.recurring_activity_id,
+      reminderEnabled: activity.reminder_enabled
     });
   }
 
@@ -130,6 +137,58 @@ export default function WeeklyPlanEditor() {
       const recurDays = has ? prev.recurDays.filter((d) => d !== day) : [...prev.recurDays, day];
       return { ...prev, recurDays };
     });
+  }
+
+  async function saveAllOccurrences() {
+    if (!form || !form.pictogramId || !form.title.trim() || !form.recurringActivityId) return;
+
+    const timeValue = form.time ? form.time : null;
+
+    // Opdatér selve skabelonen, så fremtidige uger også får de nye værdier
+    const { error: templateError } = await supabase
+      .from("recurring_activities")
+      .update({
+        pictogram_id: form.pictogramId,
+        title: form.title.trim(),
+        time_of_day: timeValue,
+        reminder_enabled: form.reminderEnabled
+      })
+      .eq("id", form.recurringActivityId);
+
+    if (templateError) {
+      setError(templateError.message);
+      closeForm();
+      return;
+    }
+
+    // Opdatér alle allerede-materialiserede forekomster (tidligere og
+    // kommende uger der allerede har fået skabelonen lagt ind)
+    const { error: instancesError } = await supabase
+      .from("activities")
+      .update({
+        pictogram_id: form.pictogramId,
+        title: form.title.trim(),
+        time_of_day: timeValue,
+        reminder_enabled: form.reminderEnabled
+      })
+      .eq("recurring_activity_id", form.recurringActivityId);
+
+    if (!instancesError) {
+      setActivities((prev) =>
+        prev.map((a) =>
+          a.recurring_activity_id === form.recurringActivityId
+            ? {
+                ...a,
+                pictogram_id: form.pictogramId!,
+                title: form.title.trim(),
+                time_of_day: timeValue,
+                reminder_enabled: form.reminderEnabled
+              }
+            : a
+        )
+      );
+    }
+    closeForm();
   }
 
   async function saveActivity() {
@@ -148,7 +207,8 @@ export default function WeeklyPlanEditor() {
           pictogram_id: form.pictogramId,
           title: form.title.trim(),
           time_of_day: timeValue,
-          days_of_week: form.recurDays
+          days_of_week: form.recurDays,
+          reminder_enabled: form.reminderEnabled
         })
         .select()
         .single();
@@ -166,7 +226,8 @@ export default function WeeklyPlanEditor() {
             pictogram_id: form.pictogramId,
             title: form.title.trim(),
             time_of_day: timeValue,
-            recurring_activity_id: newRecurring.id
+            recurring_activity_id: newRecurring.id,
+            reminder_enabled: form.reminderEnabled
           })
           .eq("id", form.activityId);
       }
@@ -184,7 +245,8 @@ export default function WeeklyPlanEditor() {
         .update({
           pictogram_id: form.pictogramId,
           title: form.title.trim(),
-          time_of_day: timeValue
+          time_of_day: timeValue,
+          reminder_enabled: form.reminderEnabled
         })
         .eq("id", form.activityId)
         .select()
@@ -211,7 +273,8 @@ export default function WeeklyPlanEditor() {
         pictogram_id: form.pictogramId,
         title: form.title.trim(),
         sort_order: nextSortOrder,
-        time_of_day: timeValue
+        time_of_day: timeValue,
+        reminder_enabled: form.reminderEnabled
       })
       .select()
       .single();
@@ -294,6 +357,11 @@ export default function WeeklyPlanEditor() {
                             🔁
                           </span>
                         )}
+                        {activity.reminder_enabled && (
+                          <span className="recurring-badge" title="Påmindelse slået til">
+                            🔔
+                          </span>
+                        )}
                         {activity.title}
                       </span>
                     </button>
@@ -358,6 +426,19 @@ export default function WeeklyPlanEditor() {
                         {form.time && <AnalogClock time={form.time} size={36} />}
                       </div>
 
+                      {form.time && (
+                        <label className="recur-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={form.reminderEnabled}
+                            onChange={(e) =>
+                              setForm((prev) => (prev ? { ...prev, reminderEnabled: e.target.checked } : prev))
+                            }
+                          />
+                          🔔 Send en påmindelse på tidspunktet (fx til medicin)
+                        </label>
+                      )}
+
                       {!form.alreadyRecurring && (
                         <div className="recur-section">
                           <label className="recur-checkbox">
@@ -405,8 +486,18 @@ export default function WeeklyPlanEditor() {
                         onClick={saveActivity}
                         disabled={!form.title.trim() || (form.isRecurring && form.recurDays.length === 0)}
                       >
-                        Gem
+                        {form.alreadyRecurring ? "Gem (kun denne dag)" : "Gem"}
                       </button>
+                      {form.alreadyRecurring && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={saveAllOccurrences}
+                          disabled={!form.title.trim()}
+                        >
+                          Gem for alle gentagelser
+                        </button>
+                      )}
                     </>
                   )}
                   <button type="button" className="btn btn-ghost btn-small" onClick={closeForm}>
