@@ -9,6 +9,7 @@ import InstallAppPrompt from "../../components/InstallAppPrompt";
 import ReminderSetup from "../../components/ReminderSetup";
 import FamilyParents from "../../components/FamilyParents";
 import EditChildModal from "../../components/EditChildModal";
+import FamilyCalendarAccessControl from "../../components/FamilyCalendarAccessControl";
 
 interface Child {
   id: string;
@@ -106,6 +107,12 @@ export default function ParentDashboard() {
               </button>
             </div>
             <PairingCodeGenerator childId={child.id} childName={child.name} />
+            {child.is_family_calendar && (
+              <FamilyCalendarAccessControl
+                calendarId={child.id}
+                siblings={children.filter((c) => !c.is_family_calendar)}
+              />
+            )}
           </li>
         ))}
       </ul>

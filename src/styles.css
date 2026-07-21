@@ -1064,3 +1064,33 @@ input:focus {
 .delete-child-link {
   color: var(--color-accent-coral);
 }
+
+/* --- Adgang til familiekalender --- */
+
+.calendar-access {
+  margin-top: 0.5rem;
+  padding-left: 3.25rem;
+  font-size: 0.85rem;
+}
+
+.calendar-access-label {
+  color: var(--color-ink-soft);
+  margin-bottom: 0.3rem;
+}
+
+.calendar-access-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.calendar-access-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.calendar-access-item input {
+  width: auto;
+}
