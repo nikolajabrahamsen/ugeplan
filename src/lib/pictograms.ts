@@ -57,9 +57,37 @@ interface OpenSymbolsRaw {
   repo_key?: string;
 }
 
+const MIN_RESULTS_BEFORE_FALLBACK = 6;
+
 async function searchOpenSymbolsResults(query: string): Promise<PictogramResult[]> {
+  const danish = await searchOpenSymbolsByLocale(query, "da");
+
+  if (danish.length >= MIN_RESULTS_BEFORE_FALLBACK) {
+    return danish;
+  }
+
+  // Samme problem som med ARASAAC: dansk dækning er tynd, så suppler med
+  // en engelsk søgning når det danske resultat er sparsomt
+  const english = await searchOpenSymbolsByLocale(query, "en").catch(
+    () => [] as PictogramResult[]
+  );
+
+  const seen = new Set<string>();
+  const combined: PictogramResult[] = [];
+  for (const result of [...danish, ...english]) {
+    if (seen.has(result.storedValue)) continue;
+    seen.add(result.storedValue);
+    combined.push(result);
+  }
+  return combined;
+}
+
+async function searchOpenSymbolsByLocale(
+  query: string,
+  locale: "da" | "en"
+): Promise<PictogramResult[]> {
   const { data, error } = await supabase.functions.invoke("search-pictograms", {
-    body: { q: query, locale: "da" }
+    body: { q: query, locale }
   });
   if (error) throw error;
 

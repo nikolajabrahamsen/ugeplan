@@ -26,6 +26,7 @@ export async function getOrCreateFamily(): Promise<{ id: string; name: string }>
 export interface FamilyParent {
   user_id: string;
   email: string;
+  display_name: string | null;
   joined_at: string;
 }
 
@@ -36,6 +37,19 @@ export async function listFamilyParents(familyId: string): Promise<FamilyParent[
   });
   if (error) throw error;
   return (data ?? []) as FamilyParent[];
+}
+
+/** Sætter den aktuelle brugers eget visningsnavn i familien. */
+export async function setOwnDisplayName(familyId: string, displayName: string): Promise<void> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) throw new Error("Ikke logget ind");
+
+  const { error } = await supabase
+    .from("family_members")
+    .update({ display_name: displayName.trim() || null })
+    .eq("family_id", familyId)
+    .eq("user_id", userData.user.id);
+  if (error) throw error;
 }
 
 /** Inviterer en anden forælder til familien ved email. */

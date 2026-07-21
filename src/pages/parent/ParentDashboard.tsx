@@ -15,6 +15,7 @@ interface Child {
   name: string;
   birth_year: number | null;
   avatar_pictogram_id: string | null;
+  is_family_calendar: boolean;
 }
 
 export default function ParentDashboard() {
@@ -28,7 +29,7 @@ export default function ParentDashboard() {
     // RLS sørger for kun at returnere børn i brugerens egen familie
     const { data, error } = await supabase
       .from("children")
-      .select("id, name, birth_year, avatar_pictogram_id")
+      .select("id, name, birth_year, avatar_pictogram_id, is_family_calendar")
       .order("name");
 
     if (!error && data) setChildren(data);
@@ -95,6 +96,7 @@ export default function ParentDashboard() {
               <Link to={`/parent/child/${child.id}/plan`} className="child-name-link">
                 {child.name}
               </Link>
+              {child.is_family_calendar && <span className="family-calendar-badge">📅 Fælles</span>}
               <button
                 type="button"
                 className="btn-icon child-edit-link"
@@ -123,6 +125,10 @@ export default function ParentDashboard() {
           child={editingChild}
           onClose={() => setEditingChild(null)}
           onSaved={() => {
+            setEditingChild(null);
+            loadChildren();
+          }}
+          onDeleted={() => {
             setEditingChild(null);
             loadChildren();
           }}

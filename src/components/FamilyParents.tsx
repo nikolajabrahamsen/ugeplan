@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { listFamilyParents, inviteParent, removeParent, type FamilyParent } from "../lib/family";
+import {
+  listFamilyParents,
+  inviteParent,
+  removeParent,
+  setOwnDisplayName,
+  type FamilyParent
+} from "../lib/family";
 
 interface Props {
   familyId: string;
@@ -15,6 +21,8 @@ export default function FamilyParents({ familyId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [confirmingUserId, setConfirmingUserId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [editingOwnName, setEditingOwnName] = useState(false);
+  const [ownNameInput, setOwnNameInput] = useState("");
 
   async function loadParents() {
     try {
@@ -64,51 +72,101 @@ export default function FamilyParents({ familyId }: Props) {
     }
   }
 
+  function startEditingOwnName(current: string | null) {
+    setOwnNameInput(current ?? "");
+    setEditingOwnName(true);
+  }
+
+  async function handleSaveOwnName(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await setOwnDisplayName(familyId, ownNameInput);
+      setEditingOwnName(false);
+      await loadParents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke gemme navnet.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="card family-parents">
       <h3>Forældre i familien</h3>
       <ul className="parent-list">
-        {parents.map((parent) => (
-          <li key={parent.user_id} className="parent-row">
-            {confirmingUserId === parent.user_id ? (
-              <span className="parent-confirm">
-                Fjern {parent.email}?
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => handleRemove(parent.user_id)}
-                  disabled={removing}
-                >
-                  {removing ? "Fjerner..." : "Ja, fjern"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setConfirmingUserId(null)}
-                  disabled={removing}
-                >
-                  Fortryd
-                </button>
-              </span>
-            ) : (
-              <>
-                <span>
-                  {parent.email}
-                  {parent.user_id === currentUserId && " (dig)"}
-                </span>
-                {parents.length > 1 && (
+        {parents.map((parent) => {
+          const isSelf = parent.user_id === currentUserId;
+          return (
+            <li key={parent.user_id} className="parent-row">
+              {confirmingUserId === parent.user_id ? (
+                <span className="parent-confirm">
+                  Fjern {parent.display_name ?? parent.email}?
                   <button
                     type="button"
                     className="btn-icon"
-                    onClick={() => setConfirmingUserId(parent.user_id)}
+                    onClick={() => handleRemove(parent.user_id)}
+                    disabled={removing}
                   >
-                    Fjern
+                    {removing ? "Fjerner..." : "Ja, fjern"}
                   </button>
-                )}
-              </>
-            )}
-          </li>
-        ))}
+                  <button
+                    type="button"
+                    className="btn-icon"
+                    onClick={() => setConfirmingUserId(null)}
+                    disabled={removing}
+                  >
+                    Fortryd
+                  </button>
+                </span>
+              ) : isSelf && editingOwnName ? (
+                <form onSubmit={handleSaveOwnName} className="own-name-form">
+                  <input
+                    type="text"
+                    placeholder="Dit navn (fx Mor, Far, eller dit fornavn)"
+                    value={ownNameInput}
+                    onChange={(e) => setOwnNameInput(e.target.value)}
+                    autoFocus
+                  />
+                  <button type="submit" className="btn-icon" disabled={saving}>
+                    {saving ? "Gemmer..." : "Gem"}
+                  </button>
+                  <button type="button" className="btn-icon" onClick={() => setEditingOwnName(false)}>
+                    Annullér
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <span>
+                    {parent.display_name ?? parent.email}
+                    {isSelf && " (dig)"}
+                  </span>
+                  <span className="parent-row-actions">
+                    {isSelf && (
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => startEditingOwnName(parent.display_name)}
+                      >
+                        {parent.display_name ? "Skift navn" : "Sæt navn"}
+                      </button>
+                    )}
+                    {parents.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => setConfirmingUserId(parent.user_id)}
+                      >
+                        Fjern
+                      </button>
+                    )}
+                  </span>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <form onSubmit={handleInvite} className="invite-form">

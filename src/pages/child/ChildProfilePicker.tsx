@@ -7,6 +7,7 @@ interface Child {
   id: string;
   name: string;
   avatar_pictogram_id: string | null;
+  is_family_calendar: boolean;
 }
 
 /**
@@ -24,7 +25,7 @@ export default function ChildProfilePicker() {
     async function loadChildren() {
       const { data, error } = await supabase
         .from("children")
-        .select("id, name, avatar_pictogram_id")
+        .select("id, name, avatar_pictogram_id, is_family_calendar")
         .order("name");
       if (!error && data) setChildren(data);
       setLoaded(true);
@@ -65,6 +66,8 @@ export default function ChildProfilePicker() {
                 width={120}
                 height={120}
               />
+            ) : child.is_family_calendar ? (
+              <span className="profile-card-initial">📅</span>
             ) : (
               <span className="profile-card-initial">{child.name.charAt(0).toUpperCase()}</span>
             )}
