@@ -9,15 +9,23 @@
 --    enheds-parring, redigering) uden ændringer andre steder, og kan
 --    vælges på samme profilvalgs-skærm som børnene, eller parres til en
 --    fælles iPad for sig selv.
+--
+-- Denne migration er skrevet til at være sikker at køre igen, selvom
+-- den skulle fejle midtvejs (fx pga. "cannot change return type" på
+-- funktionen nedenfor, som kræver et DROP FUNCTION først).
 -- ============================================================
 
-alter table family_members add column display_name text;
-alter table children add column is_family_calendar boolean not null default false;
+alter table family_members add column if not exists display_name text;
+alter table children add column if not exists is_family_calendar boolean not null default false;
 
 -- ============================================================
--- Opdatér list_family_parents så den også returnerer display_name
+-- Opdatér list_family_parents så den også returnerer display_name.
+-- Postgres tillader ikke at ændre en funktions returtype med
+-- "create or replace" - den skal droppes først.
 -- ============================================================
-create or replace function list_family_parents(target_family_id uuid)
+drop function if exists list_family_parents(uuid);
+
+create function list_family_parents(target_family_id uuid)
 returns table (user_id uuid, email text, display_name text, joined_at timestamptz)
 language plpgsql
 security definer
@@ -41,6 +49,8 @@ $$;
 -- nødvendigt for display_name - der har hidtil ikke været nogen
 -- UPDATE-policy overhovedet på denne tabel).
 -- ============================================================
+drop policy if exists "family_members_update_self" on family_members;
+
 create policy "family_members_update_self" on family_members
   for update using (user_id = auth.uid())
   with check (user_id = auth.uid());
