@@ -18,11 +18,27 @@
 
 const OPENSYMBOLS_BASE = "https://www.opensymbols.org/api/v2";
 
+// CORS-headers: PÅKRÆVET for at browseren overhovedet vil lade appen
+// kalde funktionen. Uden disse virker et direkte curl/PowerShell-kald
+// fint (de er ikke underlagt CORS), mens ethvert kald fra selve appen
+// i browseren bliver blokeret før det når frem - præcis det mønster
+// der opstod her.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
 Deno.serve(async (req) => {
+  // Browseren sender altid et "preflight" OPTIONS-kald før selve POST'en
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Kun POST er understøttet" }), {
       status: 405,
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 
@@ -30,7 +46,7 @@ Deno.serve(async (req) => {
   if (!secret) {
     return new Response(
       JSON.stringify({ error: "OPENSYMBOLS_SECRET er ikke sat op i Supabase" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
@@ -40,7 +56,7 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: "Ugyldig request-body" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 
@@ -48,7 +64,7 @@ Deno.serve(async (req) => {
   if (!query) {
     return new Response(JSON.stringify({ error: "Mangler søgeterm 'q'" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 
@@ -80,12 +96,12 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify(results), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Ukendt fejl" }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
