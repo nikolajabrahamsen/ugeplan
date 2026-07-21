@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 
-type Mode = "password" | "sendCode" | "verifyCode" | "setPassword";
+type Mode = "password" | "createAccount" | "sendCode" | "verifyCode" | "setPassword";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -10,22 +10,20 @@ export default function ParentLogin() {
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Naviger til forældre-dashboardet så snart der er en aktiv session -
-    // MEN kun hvis det rent faktisk er en forælders session, ikke en
-    // barne-enheds anonyme session (som aldrig skal ende i forælder-delen).
+    // MEN ikke mens vi lige er midt i kode-verifikation eller er ved at
+    // sætte et nyt kodeord op, for der er brugeren allerede "logget ind"
+    // via koden, men mangler stadig at vælge sit kodeord.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session || mode === "setPassword" || mode === "verifyCode") return;
-      if (session.user.is_anonymous) {
-        navigate("/child");
-      } else {
+      if (session && mode !== "setPassword" && mode !== "verifyCode") {
         navigate("/parent");
       }
     });
@@ -43,6 +41,34 @@ export default function ParentLogin() {
       return;
     }
     // onAuthStateChange ovenfor navigerer videre
+  }
+
+  async function handleCreateAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Adgangskoden skal være mindst ${MIN_PASSWORD_LENGTH} tegn.`);
+      return;
+    }
+    if (password !== newPasswordConfirm) {
+      setError("Adgangskoderne er ikke ens.");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    setLoading(false);
+    if (error) {
+      setError(
+        error.message === "User already registered"
+          ? "Der findes allerede en konto med den email - log ind i stedet."
+          : error.message
+      );
+      return;
+    }
+    // Ingen mail-bekræftelse påkrævet (Confirm email er slået fra i Supabase),
+    // så onAuthStateChange ovenfor navigerer med det samme videre til /parent
   }
 
   async function handleSendCode(e: React.FormEvent) {
@@ -133,18 +159,83 @@ export default function ParentLogin() {
               type="button"
               className="btn btn-ghost btn-full"
               onClick={() => {
+                setMode("createAccount");
+                setPassword("");
+                setNewPasswordConfirm("");
+                setError(null);
+              }}
+            >
+              Opret ny konto
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-full"
+              onClick={() => {
                 setMode("sendCode");
                 setError(null);
               }}
             >
-              Første gang, eller glemt adgangskode?
+              Glemt adgangskode?
+            </button>
+          </>
+        )}
+
+        {mode === "createAccount" && (
+          <>
+            <h1>Opret konto</h1>
+            <p className="auth-confirmation">
+              Vælg selv en email (bruges kun som login-navn) og en adgangskode - ingen mail
+              sendes.
+            </p>
+            <form onSubmit={handleCreateAccount}>
+              <label htmlFor="new-account-email">Email</label>
+              <input
+                id="new-account-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <label htmlFor="new-account-password">
+                Adgangskode (mindst {MIN_PASSWORD_LENGTH} tegn)
+              </label>
+              <input
+                id="new-account-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={MIN_PASSWORD_LENGTH}
+                required
+              />
+              <label htmlFor="new-account-password-confirm">Gentag adgangskode</label>
+              <input
+                id="new-account-password-confirm"
+                type="password"
+                value={newPasswordConfirm}
+                onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                minLength={MIN_PASSWORD_LENGTH}
+                required
+              />
+              <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                {loading ? "Opretter..." : "Opret konto"}
+              </button>
+            </form>
+            <button
+              type="button"
+              className="btn btn-ghost btn-full"
+              onClick={() => {
+                setMode("password");
+                setError(null);
+              }}
+            >
+              ← Har allerede en konto
             </button>
           </>
         )}
 
         {mode === "sendCode" && (
           <>
-            <h1>Log ind med email-kode</h1>
+            <h1>Nulstil adgangskode</h1>
             <form onSubmit={handleSendCode}>
               <label htmlFor="email-code">Email</label>
               <input
@@ -192,11 +283,7 @@ export default function ParentLogin() {
 
         {mode === "setPassword" && (
           <>
-            <h1>Vælg en adgangskode</h1>
-            <p className="auth-confirmation">
-              Brug denne adgangskode til at logge ind fremover - I skal ikke bruge en kode fra
-              mailen hver gang.
-            </p>
+            <h1>Vælg en ny adgangskode</h1>
             <form onSubmit={handleSetPassword}>
               <label htmlFor="new-password">Ny adgangskode (mindst {MIN_PASSWORD_LENGTH} tegn)</label>
               <input

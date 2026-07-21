@@ -56,22 +56,29 @@ Det der stadig mangler:
 - [ ] Mulighed for at redigere/slette børn og ændre rækkefølgen på
       aktiviteter (kun oprettelse og sletning er understøttet nu)
 
-## Vigtigt: forældre-login sender en kode, ikke et link
+## Vigtigt: forældre-konti oprettes uden mail
 
-`ParentLogin` bruger `verifyOtp` til at bekræfte en 6-cifret kode, i
-stedet for at følge et login-link. Det kræver en ændring i Supabase:
+**Authentication → Sign In / Providers → Email** - slå **"Confirm
+email"** fra. Uden det kræver Supabase et bekræftelses-mail-flow ved
+`signUp()`, som var netop det vi ville væk fra.
 
+Med den slået fra opretter en forælder sin konto direkte i appen
+("Opret ny konto" på login-siden): email (bruges kun som login-navn,
+skal ikke kunne modtage noget) + en selvvalgt adgangskode på mindst 8
+tegn - ingen mail sendes, kontoen er aktiv med det samme.
+
+Email-kode-flowet (`verifyOtp`) bruges nu **kun** som "glemt
+adgangskode"-fallback, og kræver stadig at mail-skabelonen er
+ændret for at virke i det scenarie:
 **Authentication → Email Templates → Magic Link** - erstat
-`{{ .ConfirmationURL }}` med `{{ .Token }}` i skabelonens indhold, så
-mailen indeholder koden i stedet for kun et link. Uden denne ændring
-sender Supabase stadig kun et link, og login-koden vil aldrig virke.
+`{{ .ConfirmationURL }}` med `{{ .Token }}`. Fungerer den fallback
+ikke (fx pga. mail-leveringsproblemer), er der ingen anden indbygget
+vej til at nulstille en glemt adgangskode i øjeblikket - overvej at
+tilføje en admin-mulighed for dette senere, hvis det bliver relevant.
 
-Email-koden bruges nu **kun** første gang en forælder logger ind, samt
-ved "glemt adgangskode". Efter første login sætter forælderen selv en
-adgangskode (mindst 8 tegn), og logger ind med email + adgangskode
-derefter - se `ParentLogin.tsx`. Overvej også at sætte **Minimum
-password length** til 8 under **Authentication → Policies** i
-Supabase, så kravet også håndhæves server-side og ikke kun i appen.
+Overvej at sætte **Minimum password length** til 8 under
+**Authentication → Policies** i Supabase, så kravet håndhæves
+server-side og ikke kun i appen.
 
 ## Vigtigt: Anonymous sign-ins skal slås til
 
