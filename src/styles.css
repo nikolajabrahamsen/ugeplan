@@ -1013,3 +1013,11 @@ input:focus {
   border-color: var(--color-primary);
   color: white;
 }
+
+.pictogram-source-badge {
+  font-size: 0.65rem;
+  color: var(--color-ink-soft);
+  background: var(--color-surface-alt);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}

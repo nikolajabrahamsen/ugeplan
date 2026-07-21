@@ -80,6 +80,22 @@ Overvej at sætte **Minimum password length** til 8 under
 **Authentication → Policies** i Supabase, så kravet håndhæves
 server-side og ikke kun i appen.
 
+## Vigtigt: OpenSymbols kræver en Edge Function-hemmelighed
+
+Piktogram-søgningen kombinerer nu ARASAAC (direkte fra klienten) og
+OpenSymbols (som selv samler Sclera, Mulberry m.fl.), via Edge
+Function'en `supabase/functions/search-pictograms`. OpenSymbols
+kræver at deres "shared secret" aldrig eksponeres i klient-kode,
+derfor ligger den kun server-side.
+
+**Opsætning:**
+1. Ansøg om en shared secret på opensymbols.org/api (manuel godkendelse)
+2. `supabase functions deploy search-pictograms`
+3. `supabase secrets set OPENSYMBOLS_SECRET=jeres-hemmelighed`
+
+Uden dette fejler kun OpenSymbols-delen af søgningen stille - ARASAAC
+virker stadig som hidtil, appen stopper ikke op af den grund.
+
 ## Vigtigt: Anonymous sign-ins skal slås til
 
 Enheds-parring (så et barns egen iPad/telefon kan bruges uden en

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
-import { pictogramImageUrl } from "../../lib/arasaac";
+import { resolvePictogramImageUrl } from "../../lib/pictograms";
 
 interface Child {
   id: string;
@@ -60,7 +60,7 @@ export default function ChildProfilePicker() {
           >
             {child.avatar_pictogram_id ? (
               <img
-                src={pictogramImageUrl(child.avatar_pictogram_id)}
+                src={resolvePictogramImageUrl(child.avatar_pictogram_id)}
                 alt=""
                 width={120}
                 height={120}

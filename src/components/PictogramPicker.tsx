@@ -1,26 +1,20 @@
 import { useState } from "react";
-import {
-  searchPictograms,
-  pictogramImageUrl,
-  pictogramId,
-  pictogramKeyword,
-  type ArasaacPictogram
-} from "../lib/arasaac";
+import { searchAllPictograms, type PictogramResult } from "../lib/pictograms";
 
 interface Props {
-  onSelect: (pictogramId: string) => void;
+  onSelect: (storedValue: string) => void;
   onClose: () => void;
 }
 
 /**
- * Modal-lignende søgning i ARASAAC's piktogram-bibliotek.
- * Bruges kun i forældre-UI'et (fx når en aktivitet oprettes/redigeres) -
- * IKKE i børnenes visning, som kun viser allerede-valgte piktogrammer
- * (og dermed rammer den cachede statiske billed-URL, ikke søge-API'et).
+ * Piktogram-søgning på tværs af flere biblioteker (ARASAAC + OpenSymbols,
+ * som selv samler Sclera, Mulberry m.fl.). Bruges kun i forældre-UI'et
+ * (fx når en aktivitet oprettes/redigeres) - IKKE i børnenes visning, som
+ * kun viser allerede-valgte piktogrammer via resolvePictogramImageUrl.
  */
 export default function PictogramPicker({ onSelect, onClose }: Props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ArasaacPictogram[]>([]);
+  const [results, setResults] = useState<PictogramResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -31,9 +25,8 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const found = await searchPictograms(query.trim());
-      // Kun tag piktogrammer hvor vi rent faktisk kan udlede et id
-      setResults(found.filter((p) => pictogramId(p) !== undefined).slice(0, 48));
+      const found = await searchAllPictograms(query.trim());
+      setResults(found.slice(0, 48));
     } catch {
       setError("Kunne ikke hente piktogrammer lige nu. Prøv igen.");
     } finally {
@@ -74,20 +67,20 @@ export default function PictogramPicker({ onSelect, onClose }: Props) {
         )}
 
         <div className="pictogram-results">
-          {results.map((pictogram) => {
-            const id = pictogramId(pictogram)!;
-            return (
-              <button
-                key={id}
-                type="button"
-                className="pictogram-result"
-                onClick={() => onSelect(String(id))}
-              >
-                <img src={pictogramImageUrl(id, 300)} alt="" width={100} height={100} />
-                <span>{pictogramKeyword(pictogram)}</span>
-              </button>
-            );
-          })}
+          {results.map((pictogram) => (
+            <button
+              key={pictogram.storedValue}
+              type="button"
+              className="pictogram-result"
+              onClick={() => onSelect(pictogram.storedValue)}
+            >
+              <img src={pictogram.imageUrl} alt="" width={100} height={100} />
+              <span>{pictogram.label}</span>
+              {pictogram.source === "opensymbols" && pictogram.repoKey && (
+                <span className="pictogram-source-badge">{pictogram.repoKey}</span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
     </div>

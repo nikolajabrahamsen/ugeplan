@@ -38,6 +38,19 @@ export default defineConfig({
             }
           },
           {
+            // OpenSymbols-piktogrammer (Sclera, Mulberry m.fl.) - hostes typisk
+            // via Google Cloud Storage eller CloudFront, samme cache-strategi
+            urlPattern: /^https:\/\/(storage\.googleapis\.com|.*\.cloudfront\.net)\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "opensymbols-pictograms",
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 90
+              }
+            }
+          },
+          {
             // Supabase data-kald: network-first med fallback til cache, så seneste kendte ugeplan vises offline
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: "NetworkFirst",

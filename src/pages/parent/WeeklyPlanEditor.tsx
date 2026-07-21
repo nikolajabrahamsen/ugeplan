@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
-import { pictogramImageUrl } from "../../lib/arasaac";
+import { resolvePictogramImageUrl } from "../../lib/pictograms";
 import PictogramPicker from "../../components/PictogramPicker";
 import AnalogClock from "../../components/AnalogClock";
 
@@ -278,7 +278,7 @@ export default function WeeklyPlanEditor() {
                         <AnalogClock time={activity.time_of_day.slice(0, 5)} size={28} />
                       )}
                       <img
-                        src={pictogramImageUrl(activity.pictogram_id, 300)}
+                        src={resolvePictogramImageUrl(activity.pictogram_id, 300)}
                         alt=""
                         width={48}
                         height={48}
@@ -336,7 +336,7 @@ export default function WeeklyPlanEditor() {
                         onClick={() => setForm((prev) => (prev ? { ...prev, pickingPictogram: true } : prev))}
                       >
                         {form.pictogramId && (
-                          <img src={pictogramImageUrl(form.pictogramId, 300)} alt="" width={48} height={48} />
+                          <img src={resolvePictogramImageUrl(form.pictogramId, 300)} alt="" width={48} height={48} />
                         )}
                         <span className="btn-icon">Skift piktogram</span>
                       </button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
-import { pictogramImageUrl } from "../../lib/arasaac";
+import { resolvePictogramImageUrl } from "../../lib/pictograms";
 import AnalogClock from "../../components/AnalogClock";
 
 interface Activity {
@@ -131,7 +131,7 @@ export default function ChildWeeklyView() {
                       <AnalogClock time={activity.time_of_day.slice(0, 5)} size={44} />
                     )}
                     <img
-                      src={pictogramImageUrl(activity.pictogram_id)}
+                      src={resolvePictogramImageUrl(activity.pictogram_id)}
                       alt=""
                       width={140}
                       height={140}

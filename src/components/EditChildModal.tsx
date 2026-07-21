@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { pictogramImageUrl } from "../lib/arasaac";
+import { resolvePictogramImageUrl } from "../lib/pictograms";
 import PictogramPicker from "./PictogramPicker";
 
 interface Child {
@@ -65,7 +65,7 @@ export default function EditChildModal({ child, onSaved, onClose }: Props) {
             onClick={() => setPickingAvatar(true)}
           >
             {avatarId ? (
-              <img src={pictogramImageUrl(avatarId, 300)} alt="" width={80} height={80} />
+              <img src={resolvePictogramImageUrl(avatarId, 300)} alt="" width={80} height={80} />
             ) : (
               <span className="profile-card-initial small">{name.charAt(0).toUpperCase() || "?"}</span>
             )}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateFamily } from "../../lib/family";
-import { pictogramImageUrl } from "../../lib/arasaac";
+import { resolvePictogramImageUrl } from "../../lib/pictograms";
 import ChildForm from "../../components/ChildForm";
 import PairingCodeGenerator from "../../components/PairingCodeGenerator";
 import InstallAppPrompt from "../../components/InstallAppPrompt";
@@ -82,7 +82,7 @@ export default function ParentDashboard() {
               >
                 {child.avatar_pictogram_id ? (
                   <img
-                    src={pictogramImageUrl(child.avatar_pictogram_id, 100)}
+                    src={resolvePictogramImageUrl(child.avatar_pictogram_id, 100)}
                     alt=""
                     className="child-avatar-img"
                   />
