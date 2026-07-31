@@ -7,14 +7,11 @@ interface Child {
   id: string;
   name: string;
   avatar_pictogram_id: string | null;
-  is_family_calendar: boolean;
 }
 
 /**
  * "Kiosk-indgang" - vises efter forælderen er logget ind, så barnet selv
- * kan vælge sin egen profil uden at have sit eget login. En evt. PIN-kode
- * (children.pin_code) kan tilføjes her som ekstra spærre, hvis familien
- * ønsker det, men er ikke påkrævet.
+ * kan vælge sin egen profil uden at have sit eget login.
  */
 export default function ChildProfilePicker() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -25,7 +22,7 @@ export default function ChildProfilePicker() {
     async function loadChildren() {
       const { data, error } = await supabase
         .from("children")
-        .select("id, name, avatar_pictogram_id, is_family_calendar")
+        .select("id, name, avatar_pictogram_id")
         .order("name");
       if (!error && data) setChildren(data);
       setLoaded(true);
@@ -39,8 +36,7 @@ export default function ChildProfilePicker() {
       // En parret barne-enhed har altid præcis ét barn synligt (RLS
       // begrænser den til netop det barn den blev parret til) - så på en
       // sådan enhed er der intet at vælge imellem, og vi springer direkte
-      // til ugeplanen for en glidende genåbning. En forælder med kun ét
-      // barn i familien rammer også denne, hvilket bare er lidt bekvemt.
+      // til ugeplanen for en glidende genåbning.
       const { data } = await supabase.auth.getSession();
       if (data.session?.user.is_anonymous) {
         navigate(`/child/${children[0].id}/week`, { replace: true });
@@ -66,8 +62,6 @@ export default function ChildProfilePicker() {
                 width={120}
                 height={120}
               />
-            ) : child.is_family_calendar ? (
-              <span className="profile-card-initial">📅</span>
             ) : (
               <span className="profile-card-initial">{child.name.charAt(0).toUpperCase()}</span>
             )}

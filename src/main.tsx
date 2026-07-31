@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import ParentLogin from "./pages/parent/ParentLogin";
-import WeeklyPlanEditor from "./pages/parent/WeeklyPlanEditor";
+import FamilyCalendar from "./pages/parent/FamilyCalendar";
 import RequireAuth from "./components/RequireAuth";
 import ChildProfilePicker from "./pages/child/ChildProfilePicker";
 import ChildWeeklyView from "./pages/child/ChildWeeklyView";
@@ -35,10 +35,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           }
         />
         <Route
-          path="/parent/child/:childId/plan"
+          path="/parent/calendar"
           element={
             <RequireAuth requireParent>
-              <WeeklyPlanEditor />
+              <FamilyCalendar />
             </RequireAuth>
           }
         />

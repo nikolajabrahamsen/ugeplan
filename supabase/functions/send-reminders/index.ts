@@ -35,17 +35,24 @@ Deno.serve(async () => {
   let sentCount = 0;
 
   for (const reminder of reminders) {
-    // Find alle brugere der skal have besked: familiens forældre + en
-    // eventuel parret barne-enhed for netop dette barn
+    // Find alle brugere der skal have besked: familiens forældre + alle
+    // parrede barne-enheder i familien (en begivenhed kan gælde flere
+    // børn eller hele familien, så vi underretter bredt frem for kun ét barn)
     const { data: parentMembers } = await supabase
       .from("family_members")
       .select("user_id")
       .eq("family_id", reminder.family_id);
 
-    const { data: deviceMembers } = await supabase
-      .from("children_devices")
-      .select("user_id")
-      .eq("child_id", reminder.child_id);
+    const { data: familyChildren } = await supabase
+      .from("children")
+      .select("id")
+      .eq("family_id", reminder.family_id);
+
+    const childIds = (familyChildren ?? []).map((c) => c.id);
+
+    const { data: deviceMembers } = childIds.length
+      ? await supabase.from("children_devices").select("user_id").in("child_id", childIds)
+      : { data: [] };
 
     const userIds = [
       ...(parentMembers ?? []).map((m) => m.user_id),
@@ -80,7 +87,7 @@ Deno.serve(async () => {
       }
     }
 
-    await supabase.rpc("mark_reminder_sent", { target_activity_id: reminder.activity_id });
+    await supabase.rpc("mark_reminder_sent", { target_event_id: reminder.event_id });
   }
 
   return new Response(JSON.stringify({ sent: sentCount }), {

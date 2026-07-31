@@ -1111,3 +1111,211 @@ input:focus {
   font-size: 2rem;
   margin: 0.5rem 0 0;
 }
+
+/* --- Familiekalender (måned/år-visning) --- */
+
+.family-calendar-link {
+  display: inline-flex;
+  margin-bottom: 1.5rem;
+  text-decoration: none;
+}
+
+.dashboard-section-title {
+  margin-top: 1rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-nav-center {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.calendar-month-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.calendar-year-select {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.month-grid-weekday {
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  padding-bottom: 0.3rem;
+}
+
+.month-day-cell {
+  aspect-ratio: 1 / 1;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+}
+
+.month-day-cell.outside-month {
+  background: var(--color-surface-alt);
+  opacity: 0.5;
+}
+
+.month-day-cell.is-today {
+  border-color: var(--color-primary);
+  border-width: 2px;
+}
+
+.month-day-number {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.month-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.month-event-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.month-event-chip img {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.month-event-chip.completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.month-event-more {
+  font-size: 0.65rem;
+  color: var(--color-ink-soft);
+}
+
+.day-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 55, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.day-panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-raised);
+  text-transform: capitalize;
+}
+
+.day-panel-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.event-form {
+  max-width: 420px;
+}
+
+.event-children-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+  font-weight: 400;
+}
+
+.child-assignment {
+  margin: 0.75rem 0;
+  padding: 0.6rem;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-sm);
+}
+
+.child-assignment-label {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.child-assignment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.4rem;
+  padding-left: 1rem;
+}
+
+.day-column-date {
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  margin: -0.5rem 0 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .month-day-cell {
+    min-height: 60px;
+  }
+
+  .month-event-chip span,
+  .month-event-chip {
+    font-size: 0.6rem;
+  }
+}

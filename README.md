@@ -30,13 +30,44 @@ src/pages/parent/       Forældre-login og -dashboard
 src/pages/child/        Låst børne-visning (profilvalg + ugeplan)
 ```
 
+## Vigtigt: familiekalenderen er nu selve grundlaget (juli 2026)
+
+Appen blev lagt fundamentalt om: der er ikke længere separate,
+adskilte kalendere pr. barn. I stedet ligger ALT i én fælles
+`events`-tabel pr. familie, med en rigtig kalenderdato - hver
+begivenhed markeres med hvem den gælder for (ét/flere bestemte børn,
+eller "hele familien").
+
+- **Familiekalenderen** (`/parent/calendar`, `FamilyCalendar.tsx`) er en
+  rigtig måned/år-navigerbar kalender - her oprettes og redigeres alle
+  begivenheder, med et valg af hvem de gælder for.
+- **Børnenes visning** (`ChildWeeklyView.tsx`) er nu et **rullende
+  7-dages vindue** (i dag + 6 dage frem, ikke længere en fast
+  mandag-søndag-uge), som automatisk henter både barnets egne
+  begivenheder og de familie-brede.
+- Den gamle "familiekalender som en slags barn"-model
+  (`is_family_calendar`, `family_calendar_access`) er fjernet helt -
+  familiekalenderen er ikke længere en profil man vælger, den er
+  selve grundlaget.
+- Migrationen `20260722000000_family_calendar_master.sql` konverterer
+  automatisk al eksisterende data (aktiviteter, gentagelser) til den
+  nye model, og sletter de gamle `weekly_plans`/`activities`/
+  `recurring_activities`-tabeller bagefter. **Denne migration er ikke
+  reversibel** - tag et backup af databasen først, hvis I vil kunne
+  fortryde (Supabase Dashboard → Database → Backups).
+- Fuldførte begivenheder har lige nu **fælles status** (ikke pr.
+  barn) - hvis en begivenhed gælder flere børn og ét barn markerer
+  den som gjort, ser alle den som gjort. Det kan laves om til
+  individuel status pr. barn senere, hvis det viser sig at give mere
+  mening i praksis.
+
 ## Status / næste skridt
 
 Grundfunktionerne er nu på plads:
 
 - [x] Formular til at oprette børn (`ChildForm`, brugt i `ParentDashboard`)
-- [x] Ugeplan-editor (`WeeklyPlanEditor`): vælg dag, søg ARASAAC-piktogram
-      via `PictogramPicker`, sæt titel, gem som `activity`
+- [x] Familiekalender (`FamilyCalendar`): måned/år-navigation, opret/redigér
+      begivenheder med valg af hvem de gælder for, via `EventForm`
 - [x] `onAuthStateChange`-lytter i `ParentLogin`, så login navigerer
       videre til `/parent`
 - [x] Route-guard (`RequireAuth`) på `/parent`-ruterne

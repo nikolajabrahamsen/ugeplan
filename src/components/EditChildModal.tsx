@@ -8,7 +8,6 @@ interface Child {
   name: string;
   birth_year: number | null;
   avatar_pictogram_id: string | null;
-  is_family_calendar: boolean;
 }
 
 interface Props {
@@ -18,7 +17,7 @@ interface Props {
   onDeleted: () => void;
 }
 
-/** Modal til at redigere (eller slette) et barn/en familiekalender. */
+/** Modal til at redigere (eller slette) et barn. */
 export default function EditChildModal({ child, onSaved, onClose, onDeleted }: Props) {
   const [name, setName] = useState(child.name);
   const [birthYear, setBirthYear] = useState(child.birth_year?.toString() ?? "");
@@ -39,7 +38,7 @@ export default function EditChildModal({ child, onSaved, onClose, onDeleted }: P
       .from("children")
       .update({
         name: name.trim(),
-        birth_year: child.is_family_calendar ? null : birthYear ? Number(birthYear) : null,
+        birth_year: birthYear ? Number(birthYear) : null,
         avatar_pictogram_id: avatarId
       })
       .eq("id", child.id);
@@ -97,19 +96,15 @@ export default function EditChildModal({ child, onSaved, onClose, onDeleted }: P
             required
           />
 
-          {!child.is_family_calendar && (
-            <>
-              <label htmlFor="edit-child-birth-year">Fødselsår (valgfrit)</label>
-              <input
-                id="edit-child-birth-year"
-                type="number"
-                value={birthYear}
-                onChange={(e) => setBirthYear(e.target.value)}
-                min={2000}
-                max={2030}
-              />
-            </>
-          )}
+          <label htmlFor="edit-child-birth-year">Fødselsår (valgfrit)</label>
+          <input
+            id="edit-child-birth-year"
+            type="number"
+            value={birthYear}
+            onChange={(e) => setBirthYear(e.target.value)}
+            min={2000}
+            max={2030}
+          />
 
           <div className="edit-child-actions">
             <button type="submit" className="btn btn-primary btn-small" disabled={saving}>
@@ -125,7 +120,8 @@ export default function EditChildModal({ child, onSaved, onClose, onDeleted }: P
         <div className="delete-child-section">
           {confirmingDelete ? (
             <p className="parent-confirm">
-              Slet {child.name} permanent, inklusiv hele ugeplanen? Kan ikke fortrydes.
+              Slet {child.name} permanent, inklusiv alle begivenheder der kun gælder for dette
+              barn? Kan ikke fortrydes.
               <button type="button" className="btn-icon" onClick={handleDelete} disabled={deleting}>
                 {deleting ? "Sletter..." : "Ja, slet"}
               </button>
@@ -135,7 +131,7 @@ export default function EditChildModal({ child, onSaved, onClose, onDeleted }: P
             </p>
           ) : (
             <button type="button" className="btn-icon delete-child-link" onClick={() => setConfirmingDelete(true)}>
-              Slet {child.is_family_calendar ? "kalenderen" : "barnet"}
+              Slet barnet
             </button>
           )}
         </div>

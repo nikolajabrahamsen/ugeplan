@@ -9,14 +9,12 @@ import InstallAppPrompt from "../../components/InstallAppPrompt";
 import ReminderSetup from "../../components/ReminderSetup";
 import FamilyParents from "../../components/FamilyParents";
 import EditChildModal from "../../components/EditChildModal";
-import FamilyCalendarAccessControl from "../../components/FamilyCalendarAccessControl";
 
 interface Child {
   id: string;
   name: string;
   birth_year: number | null;
   avatar_pictogram_id: string | null;
-  is_family_calendar: boolean;
 }
 
 export default function ParentDashboard() {
@@ -27,10 +25,9 @@ export default function ParentDashboard() {
   const [editingChild, setEditingChild] = useState<Child | null>(null);
 
   async function loadChildren() {
-    // RLS sørger for kun at returnere børn i brugerens egen familie
     const { data, error } = await supabase
       .from("children")
-      .select("id, name, birth_year, avatar_pictogram_id, is_family_calendar")
+      .select("id, name, birth_year, avatar_pictogram_id")
       .order("name");
 
     if (!error && data) setChildren(data);
@@ -70,6 +67,12 @@ export default function ParentDashboard() {
       <InstallAppPrompt />
       <ReminderSetup />
 
+      <Link to="/parent/calendar" className="btn btn-primary family-calendar-link">
+        📅 Åbn familiekalenderen
+      </Link>
+
+      <h2 className="dashboard-section-title">Børn</h2>
+
       {children.length === 0 && (
         <p className="empty-state">Tilføj jeres første barn for at komme i gang.</p>
       )}
@@ -94,10 +97,7 @@ export default function ParentDashboard() {
                   <span className="child-avatar">{child.name.charAt(0).toUpperCase()}</span>
                 )}
               </button>
-              <Link to={`/parent/child/${child.id}/plan`} className="child-name-link">
-                {child.name}
-              </Link>
-              {child.is_family_calendar && <span className="family-calendar-badge">📅 Fælles</span>}
+              <span className="child-name-link">{child.name}</span>
               <button
                 type="button"
                 className="btn-icon child-edit-link"
@@ -107,12 +107,6 @@ export default function ParentDashboard() {
               </button>
             </div>
             <PairingCodeGenerator childId={child.id} childName={child.name} />
-            {child.is_family_calendar && (
-              <FamilyCalendarAccessControl
-                calendarId={child.id}
-                siblings={children.filter((c) => !c.is_family_calendar)}
-              />
-            )}
           </li>
         ))}
       </ul>
