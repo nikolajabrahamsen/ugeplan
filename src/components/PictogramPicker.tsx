@@ -24,6 +24,7 @@ export default function PictogramPicker({ familyId, onSelect, onClose }: Props) 
   const [showUpload, setShowUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadLabel, setUploadLabel] = useState("");
+  const [uploadIsPublic, setUploadIsPublic] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
@@ -48,7 +49,7 @@ export default function PictogramPicker({ familyId, onSelect, onClose }: Props) 
     setUploading(true);
     setError(null);
     try {
-      const pictogram = await uploadCustomPictogram(familyId, uploadFile, uploadLabel.trim());
+      const pictogram = await uploadCustomPictogram(familyId, uploadFile, uploadLabel.trim(), uploadIsPublic);
       onSelect(pictogram.storedValue);
     } catch {
       setError("Kunne ikke uploade billedet. Prøv igen.");
@@ -114,7 +115,9 @@ export default function PictogramPicker({ familyId, onSelect, onClose }: Props) 
                     <span className="pictogram-source-badge">{pictogram.repoKey}</span>
                   )}
                   {pictogram.source === "custom" && (
-                    <span className="pictogram-source-badge">eget billede</span>
+                    <span className="pictogram-source-badge">
+                      {pictogram.isPublic ? "delt af en bruger" : "eget billede"}
+                    </span>
                   )}
                 </button>
               ))}
@@ -146,6 +149,15 @@ export default function PictogramPicker({ familyId, onSelect, onClose }: Props) 
               value={uploadLabel}
               onChange={(e) => setUploadLabel(e.target.value)}
             />
+            <label className="recur-checkbox">
+              <input
+                type="checkbox"
+                checked={uploadIsPublic}
+                onChange={(e) => setUploadIsPublic(e.target.checked)}
+              />
+              Del med alle der bruger appen (fx piktogrammer der mangler generelt,
+              som spejder-symboler)
+            </label>
             <div className="edit-child-actions">
               <button
                 type="submit"

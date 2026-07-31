@@ -17,6 +17,8 @@ export interface PictogramResult {
   source: "arasaac" | "opensymbols" | "custom";
   /** Kun for OpenSymbols-resultater: hvilket underliggende bibliotek (fx "sclera", "mulberry") */
   repoKey?: string;
+  /** Kun for egne uploads: er dette delt med alle, eller kun ens egen familie? */
+  isPublic?: boolean;
 }
 
 /**
@@ -114,8 +116,8 @@ function customPictogramImageUrl(storagePath: string): string {
 async function searchCustomPictograms(query: string, familyId: string): Promise<PictogramResult[]> {
   const { data, error } = await supabase
     .from("custom_pictograms")
-    .select("id, storage_path, label")
-    .eq("family_id", familyId)
+    .select("id, storage_path, label, is_public")
+    .or(`family_id.eq.${familyId},is_public.eq.true`)
     .ilike("label", `%${query}%`)
     .limit(24);
   if (error) throw error;
@@ -124,15 +126,17 @@ async function searchCustomPictograms(query: string, familyId: string): Promise<
     storedValue: `custom:${row.storage_path}`,
     imageUrl: customPictogramImageUrl(row.storage_path),
     label: row.label,
-    source: "custom" as const
+    source: "custom" as const,
+    isPublic: row.is_public
   }));
 }
 
-/** Uploader et nyt billede til familiens eget piktogram-bibliotek. */
+/** Uploader et nyt billede til familiens eget piktogram-bibliotek, evt. delt med alle. */
 export async function uploadCustomPictogram(
   familyId: string,
   file: File,
-  label: string
+  label: string,
+  isPublic: boolean
 ): Promise<PictogramResult> {
   const extension = file.name.split(".").pop() ?? "jpg";
   const fileName = `${crypto.randomUUID()}.${extension}`;
@@ -146,7 +150,8 @@ export async function uploadCustomPictogram(
   const { error: insertError } = await supabase.from("custom_pictograms").insert({
     family_id: familyId,
     storage_path: storagePath,
-    label: label.trim()
+    label: label.trim(),
+    is_public: isPublic
   });
   if (insertError) throw insertError;
 
@@ -154,7 +159,8 @@ export async function uploadCustomPictogram(
     storedValue: `custom:${storagePath}`,
     imageUrl: customPictogramImageUrl(storagePath),
     label: label.trim(),
-    source: "custom"
+    source: "custom",
+    isPublic
   };
 }
 
