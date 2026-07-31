@@ -184,6 +184,9 @@ export default function FamilyCalendar() {
                     }}
                   >
                     <img src={resolvePictogramImageUrl(event.pictogram_id, 100)} alt="" />
+                    {event.pictogram_id_2 && (
+                      <img src={resolvePictogramImageUrl(event.pictogram_id_2, 100)} alt="" />
+                    )}
                     {event.title}
                   </span>
                 ))}
@@ -227,6 +230,14 @@ export default function FamilyCalendar() {
                         width={48}
                         height={48}
                       />
+                      {event.pictogram_id_2 && (
+                        <img
+                          src={resolvePictogramImageUrl(event.pictogram_id_2, 300)}
+                          alt=""
+                          width={48}
+                          height={48}
+                        />
+                      )}
                       <span className="editor-activity-text">
                         {event.time_of_day && (
                           <span className="editor-activity-time">{event.time_of_day.slice(0, 5)}</span>

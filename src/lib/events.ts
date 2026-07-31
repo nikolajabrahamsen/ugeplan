@@ -10,6 +10,7 @@ export interface CalendarEvent {
   id: string;
   event_date: string; // "YYYY-MM-DD"
   pictogram_id: string;
+  pictogram_id_2: string | null;
   title: string;
   time_of_day: string | null;
   reminder_enabled: boolean;
@@ -57,7 +58,7 @@ export async function fetchEvents(
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_date, pictogram_id, title, time_of_day, reminder_enabled, applies_to_family, completed_at, recurring_event_id, event_children(child_id)"
+      "id, event_date, pictogram_id, pictogram_id_2, title, time_of_day, reminder_enabled, applies_to_family, completed_at, recurring_event_id, event_children(child_id)"
     )
     .eq("family_id", familyId)
     .gte("event_date", toDateStr(rangeStart))
@@ -76,6 +77,7 @@ export async function fetchEvents(
 export interface EventInput {
   familyId: string;
   pictogramId: string;
+  pictogramId2: string | null;
   title: string;
   timeOfDay: string | null;
   reminderEnabled: boolean;
@@ -90,6 +92,7 @@ export async function createEvent(input: EventInput & { eventDate: Date }): Prom
     .insert({
       family_id: input.familyId,
       pictogram_id: input.pictogramId,
+      pictogram_id_2: input.pictogramId2,
       title: input.title,
       event_date: toDateStr(input.eventDate),
       time_of_day: input.timeOfDay,
@@ -117,6 +120,7 @@ export async function createRecurringEvent(
     .insert({
       family_id: input.familyId,
       pictogram_id: input.pictogramId,
+      pictogram_id_2: input.pictogramId2,
       title: input.title,
       time_of_day: input.timeOfDay,
       days_of_week: input.daysOfWeek,
@@ -135,15 +139,21 @@ export async function createRecurringEvent(
   }
 }
 
+interface EventFieldChanges {
+  pictogramId: string;
+  pictogramId2: string | null;
+  title: string;
+  timeOfDay: string | null;
+  reminderEnabled: boolean;
+}
+
 /** Redigér kun denne ene forekomst af en begivenhed. */
-export async function updateEvent(
-  eventId: string,
-  changes: { pictogramId: string; title: string; timeOfDay: string | null; reminderEnabled: boolean }
-): Promise<void> {
+export async function updateEvent(eventId: string, changes: EventFieldChanges): Promise<void> {
   const { error } = await supabase
     .from("events")
     .update({
       pictogram_id: changes.pictogramId,
+      pictogram_id_2: changes.pictogramId2,
       title: changes.title,
       time_of_day: changes.timeOfDay,
       reminder_enabled: changes.reminderEnabled
@@ -155,12 +165,13 @@ export async function updateEvent(
 /** Redigér ALLE forekomster af en gentaget begivenhed (skabelonen + allerede-lagte datoer). */
 export async function updateAllOccurrences(
   recurringEventId: string,
-  changes: { pictogramId: string; title: string; timeOfDay: string | null; reminderEnabled: boolean }
+  changes: EventFieldChanges
 ): Promise<void> {
   const { error: templateError } = await supabase
     .from("recurring_events")
     .update({
       pictogram_id: changes.pictogramId,
+      pictogram_id_2: changes.pictogramId2,
       title: changes.title,
       time_of_day: changes.timeOfDay,
       reminder_enabled: changes.reminderEnabled
@@ -172,6 +183,7 @@ export async function updateAllOccurrences(
     .from("events")
     .update({
       pictogram_id: changes.pictogramId,
+      pictogram_id_2: changes.pictogramId2,
       title: changes.title,
       time_of_day: changes.timeOfDay,
       reminder_enabled: changes.reminderEnabled
@@ -216,6 +228,7 @@ export async function promoteEventToRecurring(
     .insert({
       family_id: input.familyId,
       pictogram_id: input.pictogramId,
+      pictogram_id_2: input.pictogramId2,
       title: input.title,
       time_of_day: input.timeOfDay,
       days_of_week: input.daysOfWeek,
@@ -238,6 +251,7 @@ export async function promoteEventToRecurring(
     .update({
       recurring_event_id: recurring.id,
       pictogram_id: input.pictogramId,
+      pictogram_id_2: input.pictogramId2,
       title: input.title,
       time_of_day: input.timeOfDay,
       reminder_enabled: input.reminderEnabled,

@@ -120,6 +120,14 @@ export default function ChildWeeklyView() {
                       width={140}
                       height={140}
                     />
+                    {event.pictogram_id_2 && (
+                      <img
+                        src={resolvePictogramImageUrl(event.pictogram_id_2)}
+                        alt=""
+                        width={140}
+                        height={140}
+                      />
+                    )}
                     <span className="activity-title">
                       {event.time_of_day && (
                         <span className="activity-time">{event.time_of_day.slice(0, 5)}</span>

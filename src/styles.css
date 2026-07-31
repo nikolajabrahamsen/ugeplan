@@ -1338,3 +1338,25 @@ input:focus {
   align-self: flex-start;
   border: 1.5px solid var(--color-border);
 }
+
+/* --- Andet, valgfrit piktogram på en begivenhed --- */
+
+.second-pictogram {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.second-pictogram button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.add-second-pictogram {
+  align-self: flex-start;
+}

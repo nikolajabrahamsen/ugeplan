@@ -32,6 +32,8 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
 
   const [pictogramId, setPictogramId] = useState<string | null>(editingEvent?.pictogram_id ?? null);
   const [pickingPictogram, setPickingPictogram] = useState(!isEditing);
+  const [pictogramId2, setPictogramId2] = useState<string | null>(editingEvent?.pictogram_id_2 ?? null);
+  const [pickingPictogram2, setPickingPictogram2] = useState(false);
   const [title, setTitle] = useState(editingEvent?.title ?? "");
   const [time, setTime] = useState(editingEvent?.time_of_day?.slice(0, 5) ?? "");
   const [reminderEnabled, setReminderEnabled] = useState(editingEvent?.reminder_enabled ?? false);
@@ -68,6 +70,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
           await promoteEventToRecurring(editingEvent.id, {
             familyId,
             pictogramId,
+            pictogramId2,
             title: title.trim(),
             timeOfDay: timeValue,
             reminderEnabled,
@@ -78,6 +81,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
         } else {
           await updateEvent(editingEvent.id, {
             pictogramId,
+            pictogramId2,
             title: title.trim(),
             timeOfDay: timeValue,
             reminderEnabled
@@ -88,6 +92,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
         await createRecurringEvent({
           familyId,
           pictogramId,
+          pictogramId2,
           title: title.trim(),
           timeOfDay: timeValue,
           reminderEnabled,
@@ -99,6 +104,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
         await createEvent({
           familyId,
           pictogramId,
+          pictogramId2,
           title: title.trim(),
           timeOfDay: timeValue,
           reminderEnabled,
@@ -122,6 +128,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
     try {
       await updateAllOccurrences(editingEvent.recurring_event_id, {
         pictogramId,
+        pictogramId2,
         title: title.trim(),
         timeOfDay: time || null,
         reminderEnabled
@@ -173,6 +180,19 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
     );
   }
 
+  if (pickingPictogram2) {
+    return (
+      <PictogramPicker
+        familyId={familyId}
+        onSelect={(id) => {
+          setPictogramId2(id);
+          setPickingPictogram2(false);
+        }}
+        onClose={() => setPickingPictogram2(false)}
+      />
+    );
+  }
+
   return (
     <div className="pictogram-picker-overlay" onClick={onClose}>
       <div className="pictogram-picker event-form" onClick={(e) => e.stopPropagation()}>
@@ -193,6 +213,31 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
           )}
           <span className="btn-icon">Skift piktogram</span>
         </button>
+
+        {pictogramId2 ? (
+          <div className="editor-picto-preview second-pictogram">
+            <button type="button" onClick={() => setPickingPictogram2(true)}>
+              <img src={resolvePictogramImageUrl(pictogramId2, 300)} alt="" width={48} height={48} />
+              <span className="btn-icon">Skift andet piktogram</span>
+            </button>
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => setPictogramId2(null)}
+              aria-label="Fjern andet piktogram"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost btn-small add-second-pictogram"
+            onClick={() => setPickingPictogram2(true)}
+          >
+            + Tilføj andet piktogram
+          </button>
+        )}
 
         <label htmlFor="event-title">Titel</label>
         <input
