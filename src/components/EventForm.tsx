@@ -163,6 +163,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
   if (pickingPictogram) {
     return (
       <PictogramPicker
+        familyId={familyId}
         onSelect={(id) => {
           setPictogramId(id);
           setPickingPictogram(false);

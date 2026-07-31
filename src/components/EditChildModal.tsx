@@ -11,6 +11,7 @@ interface Child {
 }
 
 interface Props {
+  familyId: string;
   child: Child;
   onSaved: () => void;
   onClose: () => void;
@@ -18,7 +19,7 @@ interface Props {
 }
 
 /** Modal til at redigere (eller slette) et barn. */
-export default function EditChildModal({ child, onSaved, onClose, onDeleted }: Props) {
+export default function EditChildModal({ familyId, child, onSaved, onClose, onDeleted }: Props) {
   const [name, setName] = useState(child.name);
   const [birthYear, setBirthYear] = useState(child.birth_year?.toString() ?? "");
   const [avatarId, setAvatarId] = useState<string | null>(child.avatar_pictogram_id);
@@ -139,6 +140,7 @@ export default function EditChildModal({ child, onSaved, onClose, onDeleted }: P
 
       {pickingAvatar && (
         <PictogramPicker
+          familyId={familyId}
           onSelect={(id) => {
             setAvatarId(id);
             setPickingAvatar(false);

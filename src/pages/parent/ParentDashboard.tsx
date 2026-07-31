@@ -121,8 +121,9 @@ export default function ParentDashboard() {
         </Link>
       )}
 
-      {editingChild && (
+      {editingChild && familyId && (
         <EditChildModal
+          familyId={familyId}
           child={editingChild}
           onClose={() => setEditingChild(null)}
           onSaved={() => {

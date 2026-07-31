@@ -1319,3 +1319,22 @@ input:focus {
     font-size: 0.6rem;
   }
 }
+
+/* --- Eget piktogram-bibliotek (upload) --- */
+
+.custom-upload-toggle {
+  margin: 0.5rem 0 1rem;
+}
+
+.custom-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.custom-upload-preview {
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  align-self: flex-start;
+  border: 1.5px solid var(--color-border);
+}
