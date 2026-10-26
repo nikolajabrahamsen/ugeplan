@@ -6,6 +6,7 @@ import {
   ensureEventsMaterialized,
   fetchEvents,
   toggleEventCompleted,
+  clearFamilyCalendar,
   type CalendarChild,
   type CalendarEvent
 } from "../../lib/events";
@@ -32,6 +33,10 @@ export default function FamilyCalendar() {
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+
+  const [clearStep, setClearStep] = useState<0 | 1>(0);
+  const [clearText, setClearText] = useState("");
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -99,6 +104,23 @@ export default function FamilyCalendar() {
       );
     } catch {
       // stille fejl - ikke kritisk nok til at afbryde resten af kalenderen
+    }
+  }
+
+  async function handleClearCalendar() {
+    if (!familyId || clearText.trim().toUpperCase() !== "SLET") return;
+    setClearing(true);
+    setError(null);
+    try {
+      await clearFamilyCalendar(familyId);
+      setClearStep(0);
+      setClearText("");
+      setSelectedDate(null);
+      await loadMonth(familyId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke rydde kalenderen");
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -198,6 +220,49 @@ export default function FamilyCalendar() {
           );
         })}
       </div>
+
+      <section className="danger-zone">
+        {clearStep === 0 ? (
+          <button type="button" className="btn btn-danger btn-small" onClick={() => setClearStep(1)}>
+            Ryd hele kalenderen
+          </button>
+        ) : (
+          <div className="danger-confirm">
+            <p>
+              <strong>Det sletter alle begivenheder og gentagelser for hele familien, for alle børn og alle datoer.</strong>{" "}
+              Det kan ikke fortrydes. Skriv <strong>SLET</strong> for at bekræfte.
+            </p>
+            <input
+              type="text"
+              value={clearText}
+              onChange={(e) => setClearText(e.target.value)}
+              placeholder="SLET"
+              autoComplete="off"
+            />
+            <div className="danger-confirm-actions">
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={clearing || clearText.trim().toUpperCase() !== "SLET"}
+                onClick={handleClearCalendar}
+              >
+                {clearing ? "Rydder..." : "Ryd kalenderen for altid"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={clearing}
+                onClick={() => {
+                  setClearStep(0);
+                  setClearText("");
+                }}
+              >
+                Annuller
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
 
       {selectedDate && !editingEvent && (
         <div className="day-panel-overlay" onClick={() => setSelectedDate(null)}>

@@ -284,3 +284,14 @@ export async function toggleEventCompleted(eventId: string): Promise<string | nu
   if (error) throw error;
   return data as string | null;
 }
+
+/** Sletter ALLE begivenheder og gentagelser for familien. Kan ikke fortrydes. */
+export async function clearFamilyCalendar(familyId: string): Promise<void> {
+  const { error: eventsError } = await supabase.from("events").delete().eq("family_id", familyId);
+  if (eventsError) throw eventsError;
+  const { error: recurringError } = await supabase
+    .from("recurring_events")
+    .delete()
+    .eq("family_id", familyId);
+  if (recurringError) throw recurringError;
+}
