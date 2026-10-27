@@ -723,6 +723,31 @@ input:focus {
 
   .child-week-view {
     grid-template-columns: minmax(0, 1fr);
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .day-column {
+    padding: 0.9rem;
+  }
+
+  .activity-card {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    justify-content: center;
+  }
+
+  .activity-card img {
+    width: min(42vw, 140px);
+    height: auto;
+    max-width: 100%;
+  }
+
+  .activity-card .activity-title {
+    flex: 1 1 100%;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .profile-grid {
