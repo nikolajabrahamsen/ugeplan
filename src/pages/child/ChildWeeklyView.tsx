@@ -29,18 +29,20 @@ export default function ChildWeeklyView() {
   const [childName, setChildName] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadWeek() {
       if (!childId) return;
 
-      const { data: child } = await supabase
+      const { data: child, error: childError } = await supabase
         .from("children")
         .select("name, family_id")
         .eq("id", childId)
         .single();
 
       if (!child) {
+        setLoadError(childError?.message ?? "Kunne ikke finde barnet på denne enhed.");
         setLoading(false);
         return;
       }
@@ -53,8 +55,9 @@ export default function ChildWeeklyView() {
         await ensureEventsMaterialized(child.family_id, today, rangeEnd);
         const fetched = await fetchEvents(child.family_id, today, rangeEnd);
         setEvents(fetched);
-      } catch {
+      } catch (err) {
         setEvents([]);
+        setLoadError(err instanceof Error ? err.message : "Kunne ikke hente ugeplanen.");
       }
       setLoading(false);
     }
@@ -76,6 +79,9 @@ export default function ChildWeeklyView() {
 
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const myEvents = events.filter(
+    (e) => e.applies_to_family || (childId ? e.child_ids.includes(childId) : false)
+  );
 
   return (
     <div>
@@ -84,9 +90,13 @@ export default function ChildWeeklyView() {
       </Link>
       {childName && <h1 className="child-week-heading">{childName}</h1>}
       <ReminderSetup />
+      {loadError && <p className="error">Fejl: {loadError}</p>}
+      {!loadError && myEvents.length === 0 && (
+        <p className="loading-text">Der er ikke noget på planen de næste 7 dage.</p>
+      )}
       <div className="child-week-view">
         {days.map((day) => {
-          const dayEvents = sortDayEvents(events.filter((e) => e.event_date === toDateStr(day)));
+          const dayEvents = sortDayEvents(myEvents.filter((e) => e.event_date === toDateStr(day)));
           if (dayEvents.length === 0) return null;
 
           const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1;
