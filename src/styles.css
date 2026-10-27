@@ -469,8 +469,9 @@ input:focus {
 /* --- Barnets ugevisning (kiosk) --- */
 
 .child-week-view {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 1.5rem;
   padding: 1.5rem;
   max-width: 1100px;
@@ -481,8 +482,7 @@ input:focus {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
-  min-width: 380px;
-  flex: 1 1 420px;
+  min-width: 0;
   border-top: 6px solid var(--day-color, var(--color-primary));
   box-shadow: var(--shadow-card);
 }
@@ -496,8 +496,8 @@ input:focus {
 .day-column.day-6 { --day-color: var(--day-6-color); }
 
 .day-column.is-today {
+  grid-column: 1 / -1;
   box-shadow: var(--shadow-raised);
-  transform: scale(1.02);
 }
 
 .day-column h2 {
@@ -717,9 +717,12 @@ input:focus {
     flex-wrap: wrap;
   }
 
-  .child-week-view,
   .editor-days {
     flex-direction: column;
+  }
+
+  .child-week-view {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .profile-grid {
