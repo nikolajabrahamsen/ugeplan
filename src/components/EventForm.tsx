@@ -132,7 +132,7 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
         title: title.trim(),
         timeOfDay: time || null,
         reminderEnabled
-      });
+      }, { appliesToFamily, childIds: selectedChildIds });
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunne ikke gemme.");

@@ -168,7 +168,8 @@ export async function updateEvent(eventId: string, changes: EventFieldChanges): 
 /** Redigér ALLE forekomster af en gentaget begivenhed (skabelonen + allerede-lagte datoer). */
 export async function updateAllOccurrences(
   recurringEventId: string,
-  changes: EventFieldChanges
+  changes: EventFieldChanges,
+  who?: { appliesToFamily: boolean; childIds: string[] }
 ): Promise<void> {
   const { error: templateError } = await supabase
     .from("recurring_events")
@@ -193,6 +194,57 @@ export async function updateAllOccurrences(
     })
     .eq("recurring_event_id", recurringEventId);
   if (instancesError) throw instancesError;
+
+  if (who) await setOccurrenceChildren(recurringEventId, who.appliesToFamily, who.childIds);
+}
+
+/** Ændrer hvem en gentagelse gælder for - både skabelonen og alle allerede-lagte datoer. */
+async function setOccurrenceChildren(
+  recurringEventId: string,
+  appliesToFamily: boolean,
+  childIds: string[]
+): Promise<void> {
+  const { error: tplErr } = await supabase
+    .from("recurring_events")
+    .update({ applies_to_family: appliesToFamily })
+    .eq("id", recurringEventId);
+  if (tplErr) throw tplErr;
+
+  const { error: tplDelErr } = await supabase
+    .from("recurring_event_children")
+    .delete()
+    .eq("recurring_event_id", recurringEventId);
+  if (tplDelErr) throw tplDelErr;
+
+  if (!appliesToFamily && childIds.length > 0) {
+    const { error } = await supabase
+      .from("recurring_event_children")
+      .insert(childIds.map((childId) => ({ recurring_event_id: recurringEventId, child_id: childId })));
+    if (error) throw error;
+  }
+
+  const { data: occurrences, error: occErr } = await supabase
+    .from("events")
+    .select("id")
+    .eq("recurring_event_id", recurringEventId);
+  if (occErr) throw occErr;
+  const ids = (occurrences ?? []).map((o) => o.id as string);
+  if (ids.length === 0) return;
+
+  const { error: flagErr } = await supabase
+    .from("events")
+    .update({ applies_to_family: appliesToFamily })
+    .in("id", ids);
+  if (flagErr) throw flagErr;
+
+  const { error: delErr } = await supabase.from("event_children").delete().in("event_id", ids);
+  if (delErr) throw delErr;
+
+  if (!appliesToFamily && childIds.length > 0) {
+    const rows = ids.flatMap((eventId) => childIds.map((childId) => ({ event_id: eventId, child_id: childId })));
+    const { error } = await supabase.from("event_children").insert(rows);
+    if (error) throw error;
+  }
 }
 
 /** Ændrer hvem en enkeltstående begivenhed gælder for (bruges ved redigering). */
