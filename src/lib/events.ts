@@ -323,6 +323,21 @@ export async function deleteEvent(eventId: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Sletter en hel gentagelse: skabelonen og ALLE dens datoer (også tidligere). */
+export async function deleteAllOccurrences(recurringEventId: string): Promise<void> {
+  const { error: eventsError } = await supabase
+    .from("events")
+    .delete()
+    .eq("recurring_event_id", recurringEventId);
+  if (eventsError) throw eventsError;
+
+  const { error: templateError } = await supabase
+    .from("recurring_events")
+    .delete()
+    .eq("id", recurringEventId);
+  if (templateError) throw templateError;
+}
+
 /** Stopper en gentagelse fremover - allerede lagte datoer bliver stående som almindelige begivenheder. */
 export async function stopRecurringEvent(recurringEventId: string): Promise<void> {
   const { error } = await supabase

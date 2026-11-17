@@ -11,6 +11,7 @@ import {
   promoteEventToRecurring,
   deleteEvent,
   stopRecurringEvent,
+  deleteAllOccurrences,
   type CalendarChild,
   type CalendarEvent
 } from "../lib/events";
@@ -150,6 +151,22 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunne ikke slette.");
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (!editingEvent?.recurring_event_id) return;
+    if (!window.confirm("Slet denne begivenhed på ALLE dage - både før og fremover? Det kan ikke fortrydes.")) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteAllOccurrences(editingEvent.recurring_event_id);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke slette gentagelsen.");
       setSaving(false);
     }
   }
@@ -369,6 +386,11 @@ export default function EventForm({ familyId, date, children, editingEvent, onSa
             <button type="button" className="btn-icon delete-child-link" onClick={handleDelete} disabled={saving}>
               Slet {alreadyRecurring ? "denne dag" : "begivenheden"}
             </button>
+            {alreadyRecurring && (
+              <button type="button" className="btn-icon delete-child-link" onClick={handleDeleteAll} disabled={saving}>
+                Slet på alle dage
+              </button>
+            )}
           </div>
         )}
 
