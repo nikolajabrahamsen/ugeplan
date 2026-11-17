@@ -121,23 +121,15 @@ export default function ChildWeeklyView() {
                     className={`activity-card ${event.completed_at ? "completed" : ""}`}
                     onClick={() => handleToggle(event)}
                   >
-                    {event.time_of_day && (
-                      <AnalogClock time={event.time_of_day.slice(0, 5)} size={44} />
-                    )}
-                    <img
-                      src={resolvePictogramImageUrl(event.pictogram_id)}
-                      alt=""
-                      width={140}
-                      height={140}
-                    />
-                    {event.pictogram_id_2 && (
-                      <img
-                        src={resolvePictogramImageUrl(event.pictogram_id_2)}
-                        alt=""
-                        width={140}
-                        height={140}
-                      />
-                    )}
+                    <span className="activity-media">
+                      {event.time_of_day && (
+                        <AnalogClock time={event.time_of_day.slice(0, 5)} size={44} />
+                      )}
+                      <img src={resolvePictogramImageUrl(event.pictogram_id)} alt="" />
+                      {event.pictogram_id_2 && (
+                        <img src={resolvePictogramImageUrl(event.pictogram_id_2)} alt="" />
+                      )}
+                    </span>
                     <span className="activity-title">
                       {event.time_of_day && (
                         <span className="activity-time">{event.time_of_day.slice(0, 5)}</span>

@@ -732,22 +732,20 @@ input:focus {
   }
 
   .activity-card {
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.6rem;
     padding: 0.6rem 0.75rem;
+  }
+
+  .activity-card .activity-media {
+    width: 100%;
     justify-content: center;
   }
 
-  .activity-card img {
-    width: min(42vw, 140px);
-    height: auto;
-    max-width: 100%;
-  }
-
   .activity-card .activity-title {
-    flex: 1 1 100%;
+    flex: none;
+    width: 100%;
     text-align: center;
-    overflow-wrap: anywhere;
   }
 
   .profile-grid {
@@ -1422,4 +1420,28 @@ input:focus {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Ur + piktogrammer på én række, ens størrelse og lodret centreret */
+.activity-media {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.activity-media .analog-clock,
+.activity-media svg {
+  flex-shrink: 0;
+}
+
+.activity-card .activity-media img {
+  flex: 0 1 140px;
+  width: 140px;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
 }
