@@ -1445,3 +1445,121 @@ input:focus {
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
+
+/* Uge-/måned-visning i familiekalenderen */
+.calendar-view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.week-day {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  min-width: 0;
+}
+
+.week-day.is-today {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.week-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.25rem 0.5rem;
+}
+
+.week-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.week-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  padding: 0.5rem;
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-display);
+}
+
+.week-event.completed {
+  background: var(--color-primary-soft);
+  opacity: 0.75;
+}
+
+.week-event-pictos {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.week-event-pictos img {
+  flex: 0 1 88px;
+  min-width: 0;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  background: white;
+  border-radius: var(--radius-sm);
+}
+
+.week-event-title {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.week-event-time {
+  font-weight: 700;
+}
+
+.week-event-who {
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+}
+
+.week-add {
+  border: 1px dashed var(--color-border);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .week-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

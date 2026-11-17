@@ -17,6 +17,8 @@ import {
   endOfMonth,
   toDateStr,
   isSameDate,
+  addDays,
+  isoWeekday,
   MONTH_NAMES,
   DAY_NAMES_SHORT
 } from "../../lib/calendarDates";
@@ -25,8 +27,18 @@ import EventForm from "../../components/EventForm";
 export default function FamilyCalendar() {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [children, setChildren] = useState<CalendarChild[]>([]);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth()); // 0-11
+  const [view, setView] = useState<"month" | "week">(() => {
+    try {
+      return localStorage.getItem("calendarView") === "week" ? "week" : "month";
+    } catch {
+      return "month";
+    }
+  });
+  const [anchor, setAnchor] = useState(new Date());
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth(); // 0-11
+  const weekStart = addDays(anchor, -isoWeekday(anchor));
+  const weekEnd = addDays(weekStart, 6);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,10 +67,10 @@ export default function FamilyCalendar() {
     setLoading(true);
     setError(null);
     try {
-      const monthStart = startOfMonth(year, month);
-      const monthEnd = endOfMonth(year, month);
-      await ensureEventsMaterialized(fid, monthStart, monthEnd);
-      setEvents(await fetchEvents(fid, monthStart, monthEnd));
+      const rangeStart = view === "week" ? weekStart : startOfMonth(year, month);
+      const rangeEnd = view === "week" ? weekEnd : endOfMonth(year, month);
+      await ensureEventsMaterialized(fid, rangeStart, rangeEnd);
+      setEvents(await fetchEvents(fid, rangeStart, rangeEnd));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunne ikke hente kalenderen");
     } finally {
@@ -69,30 +81,47 @@ export default function FamilyCalendar() {
   useEffect(() => {
     if (familyId) loadMonth(familyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [familyId, year, month]);
+  }, [familyId, view, toDateStr(anchor)]);
 
-  function goToPreviousMonth() {
-    if (month === 0) {
-      setMonth(11);
-      setYear((y) => y - 1);
+  function goToPrevious() {
+    if (view === "week") {
+      setAnchor((d) => addDays(d, -7));
     } else {
-      setMonth((m) => m - 1);
+      setAnchor((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
     }
   }
 
-  function goToNextMonth() {
-    if (month === 11) {
-      setMonth(0);
-      setYear((y) => y + 1);
+  function goToNext() {
+    if (view === "week") {
+      setAnchor((d) => addDays(d, 7));
     } else {
-      setMonth((m) => m + 1);
+      setAnchor((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
     }
   }
 
   function goToToday() {
-    const now = new Date();
-    setYear(now.getFullYear());
-    setMonth(now.getMonth());
+    setAnchor(new Date());
+  }
+
+  function changeView(next: "month" | "week") {
+    setView(next);
+    try {
+      localStorage.setItem("calendarView", next);
+    } catch {
+      // ikke kritisk
+    }
+  }
+
+  function setYear(y: number) {
+    setAnchor((d) => new Date(y, d.getMonth(), 1));
+  }
+
+  function isoWeekNumber(d: Date): number {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   }
 
   async function handleToggleComplete(event: CalendarEvent, e: React.MouseEvent) {
@@ -134,6 +163,7 @@ export default function FamilyCalendar() {
 
   const grid = buildMonthGrid(year, month);
   const today = new Date();
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
     <div className="app-shell">
@@ -144,13 +174,36 @@ export default function FamilyCalendar() {
         <h1>Familiekalender</h1>
       </header>
 
+      <div className="calendar-view-toggle">
+        <button
+          type="button"
+          className={`btn btn-small ${view === "month" ? "btn-primary" : "btn-ghost"}`}
+          onClick={() => changeView("month")}
+        >
+          Måned
+        </button>
+        <button
+          type="button"
+          className={`btn btn-small ${view === "week" ? "btn-primary" : "btn-ghost"}`}
+          onClick={() => changeView("week")}
+        >
+          Uge
+        </button>
+      </div>
+
       <div className="calendar-nav">
-        <button type="button" className="btn-icon" onClick={goToPreviousMonth}>
+        <button type="button" className="btn-icon" onClick={goToPrevious}>
           ← Forrige
         </button>
         <div className="calendar-nav-center">
           <span className="calendar-month-label">
-            {MONTH_NAMES[month]} {year}
+            {view === "week"
+              ? `Uge ${isoWeekNumber(weekStart)} · ${weekStart.getDate()}. ${MONTH_NAMES[weekStart.getMonth()].toLowerCase()}${
+                  weekEnd.getMonth() !== weekStart.getMonth()
+                    ? ` – ${weekEnd.getDate()}. ${MONTH_NAMES[weekEnd.getMonth()].toLowerCase()}`
+                    : ` – ${weekEnd.getDate()}.`
+                } ${weekEnd.getFullYear()}`
+              : `${MONTH_NAMES[month]} ${year}`}
           </span>
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="calendar-year-select">
             {Array.from({ length: 11 }, (_, i) => today.getFullYear() - 5 + i).map((y) => (
@@ -163,7 +216,7 @@ export default function FamilyCalendar() {
             I dag
           </button>
         </div>
-        <button type="button" className="btn-icon" onClick={goToNextMonth}>
+        <button type="button" className="btn-icon" onClick={goToNext}>
           Næste →
         </button>
       </div>
@@ -171,6 +224,7 @@ export default function FamilyCalendar() {
       {error && <p className="error">{error}</p>}
       {loading && <p className="loading-text">Henter...</p>}
 
+      {view === "month" && (
       <div className="month-grid">
         {DAY_NAMES_SHORT.map((label) => (
           <div key={label} className="month-grid-weekday">
@@ -220,6 +274,71 @@ export default function FamilyCalendar() {
           );
         })}
       </div>
+
+      )}
+
+      {view === "week" && (
+        <div className="week-grid">
+          {weekDays.map((day) => {
+            const dayEvents = events
+              .filter((e) => e.event_date === toDateStr(day))
+              .sort((x, y) => (x.time_of_day ?? "99").localeCompare(y.time_of_day ?? "99"));
+            const isToday = isSameDate(day, today);
+            return (
+              <div key={toDateStr(day)} className={`week-day ${isToday ? "is-today" : ""}`}>
+                <button
+                  type="button"
+                  className="week-day-header"
+                  onClick={() => {
+                    setSelectedDate(day);
+                    setEditingEvent(null);
+                  }}
+                >
+                  <strong>{DAY_NAMES_SHORT[isoWeekday(day)]}</strong>
+                  <span>{day.getDate()}. {MONTH_NAMES[day.getMonth()].toLowerCase().slice(0, 3)}</span>
+                </button>
+                <div className="week-day-events">
+                  {dayEvents.map((event) => (
+                    <button
+                      type="button"
+                      key={event.id}
+                      className={`week-event ${event.completed_at ? "completed" : ""}`}
+                      onClick={() => {
+                        setSelectedDate(day);
+                        setEditingEvent(event);
+                      }}
+                    >
+                      <span className="week-event-pictos">
+                        <img src={resolvePictogramImageUrl(event.pictogram_id, 300)} alt="" />
+                        {event.pictogram_id_2 && (
+                          <img src={resolvePictogramImageUrl(event.pictogram_id_2, 300)} alt="" />
+                        )}
+                      </span>
+                      <span className="week-event-title">
+                        {event.time_of_day && (
+                          <span className="week-event-time">{event.time_of_day.slice(0, 5)} </span>
+                        )}
+                        {event.title}
+                      </span>
+                      <span className="week-event-who">{childNames(event)}</span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="week-add"
+                    onClick={() => {
+                      setSelectedDate(day);
+                      setEditingEvent({} as CalendarEvent);
+                    }}
+                  >
+                    + Tilføj
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <section className="danger-zone">
         {clearStep === 0 ? (
