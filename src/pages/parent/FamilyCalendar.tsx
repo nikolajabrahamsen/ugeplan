@@ -46,6 +46,9 @@ export default function FamilyCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
+  // Hvem vises: tom liste = alle. "family" = begivenheder for hele familien.
+  const [filterIds, setFilterIds] = useState<string[]>([]);
+
   const [clearStep, setClearStep] = useState<0 | 1>(0);
   const [clearText, setClearText] = useState("");
   const [clearing, setClearing] = useState(false);
@@ -161,6 +164,19 @@ export default function FamilyCalendar() {
       .join(", ");
   }
 
+  const visibleEvents =
+    filterIds.length === 0
+      ? events
+      : events.filter(
+          (e) =>
+            (e.applies_to_family && filterIds.includes("family")) ||
+            e.child_ids.some((id) => filterIds.includes(id))
+        );
+
+  function toggleFilter(id: string) {
+    setFilterIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
   const grid = buildMonthGrid(year, month);
   const today = new Date();
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -234,7 +250,7 @@ export default function FamilyCalendar() {
 
         {grid.map((day) => {
           const inMonth = day.getMonth() === month;
-          const dayEvents = events.filter((e) => e.event_date === toDateStr(day));
+          const dayEvents = visibleEvents.filter((e) => e.event_date === toDateStr(day));
           const isToday = isSameDate(day, today);
 
           return (
@@ -280,7 +296,7 @@ export default function FamilyCalendar() {
       {view === "week" && (
         <div className="week-grid">
           {weekDays.map((day) => {
-            const dayEvents = events
+            const dayEvents = visibleEvents
               .filter((e) => e.event_date === toDateStr(day))
               .sort((x, y) => (x.time_of_day ?? "99").localeCompare(y.time_of_day ?? "99"));
             const isToday = isSameDate(day, today);
@@ -339,6 +355,36 @@ export default function FamilyCalendar() {
           })}
         </div>
       )}
+
+      <section className="calendar-footer">
+        <div className="calendar-filter">
+          <span className="calendar-filter-label">Vis:</span>
+          <button
+            type="button"
+            className={`filter-chip ${filterIds.length === 0 ? "active" : ""}`}
+            onClick={() => setFilterIds([])}
+          >
+            Alle
+          </button>
+          <button
+            type="button"
+            className={`filter-chip ${filterIds.includes("family") ? "active" : ""}`}
+            onClick={() => toggleFilter("family")}
+          >
+            Hele familien
+          </button>
+          {children.map((child) => (
+            <button
+              type="button"
+              key={child.id}
+              className={`filter-chip ${filterIds.includes(child.id) ? "active" : ""}`}
+              onClick={() => toggleFilter(child.id)}
+            >
+              {child.name}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="danger-zone">
         {clearStep === 0 ? (
@@ -399,7 +445,7 @@ export default function FamilyCalendar() {
               </button>
             </div>
             <ul className="day-panel-list">
-              {events
+              {visibleEvents
                 .filter((e) => e.event_date === toDateStr(selectedDate))
                 .map((event) => (
                   <li key={event.id} className="editor-activity">
